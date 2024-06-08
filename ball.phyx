@@ -1,0 +1,6 @@
+new(
+    let shape=ball;
+    let size=10;
+    let gravity=1;
+    let speed=2;
+)
