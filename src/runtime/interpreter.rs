@@ -1,23 +1,28 @@
-use crate::frontend::ast::Statement;
+use std::collections::HashMap;
+
+use crate::{simulation::ElementBuilder, frontend::ast::Statement};
 
 use super::{environment::Environment, values::RuntimeValue};
 
 fn eval_program(body: Vec<Statement>, env: &mut Environment) -> Result<RuntimeValue, String> {
-    let mut last_eval = RuntimeValue::NumberValue(0.0);
+    let mut elements = vec![];
+    // let mut last_eval = RuntimeValue::Number(0.0);
 
     for statement in body {
-        last_eval = evaluate(statement, env)?;
+        if let RuntimeValue::Element(element) = evaluate(statement, env)? {
+            elements.push(element)
+        }
     }
 
-    Ok(last_eval)
+    Ok(RuntimeValue::Elements(elements))
 }
 
-fn eval_numeric_binary_expr(left: f64, right: f64, operator: String) -> Result<RuntimeValue, String> {
+fn eval_numeric_binary_expr(left: f32, right: f32, operator: String) -> Result<RuntimeValue, String> {
     match operator.as_str() {
-        "+" => Ok(RuntimeValue::NumberValue(left + right)),
-        "-" => Ok(RuntimeValue::NumberValue(left - right)),
-        "*" => Ok(RuntimeValue::NumberValue(left * right)),
-        "/" => Ok(RuntimeValue::NumberValue(left / right)),
+        "+" => Ok(RuntimeValue::Number(left + right)),
+        "-" => Ok(RuntimeValue::Number(left - right)),
+        "*" => Ok(RuntimeValue::Number(left * right)),
+        "/" => Ok(RuntimeValue::Number(left / right)),
         _ => Err(format!("Invalid operator: {:?}", operator))
     }
 }
@@ -26,8 +31,8 @@ fn eval_binary_expr(left: Statement, right: Statement, operator: String, env: &m
     let left_eval = evaluate(left.clone(), env)?;
     let right_eval = evaluate(right.clone(), env)?;
 
-    if let RuntimeValue::NumberValue(left_value) = left_eval {
-        if let RuntimeValue::NumberValue(right_value) = right_eval {
+    if let RuntimeValue::Number(left_value) = left_eval {
+        if let RuntimeValue::Number(right_value) = right_eval {
             return eval_numeric_binary_expr(left_value, right_value, operator);
         }
     }
@@ -39,9 +44,35 @@ fn eval_identifier(symbol: String, env: &mut Environment) -> Result<RuntimeValue
     env.lookup_var(symbol)
 }
 
+fn eval_shape(shape: String, _env: &mut Environment) -> Result<RuntimeValue, String> {
+    Ok(RuntimeValue::Shape(shape.try_into()?))
+}
+
+fn eval_element(map: HashMap<String, Statement>, env: &mut Environment) -> Result<RuntimeValue, String> {
+    let mut builder = ElementBuilder::new();
+
+    for (key, statement) in map {
+        let value = evaluate(statement, env)?;
+        if let RuntimeValue::Number(number) = value {
+            builder = match key.as_str() {
+                "size" => builder.size(number),
+                "gravity" => builder.gravity(number),
+                "speed" => builder.speed(number),
+                _ => return Err(format!("Invalid key '{:?} for element", key))
+            };
+        } else if let RuntimeValue::Shape(shape) = value {
+            if key.as_str() == "shape" {
+                builder = builder.shape(shape);
+            }
+        }
+    }
+
+    Ok(RuntimeValue::Element(builder.build()))
+}
+
 pub fn evaluate(ast_node: Statement, env: &mut Environment) -> Result<RuntimeValue, String> {
     match ast_node {
-        Statement::NumericLiteral(value) => Ok(RuntimeValue::NumberValue(value)),
+        Statement::NumericLiteral(value) => Ok(RuntimeValue::Number(value)),
         Statement::BinaryExpr { left, right, operator } => eval_binary_expr(
             left.as_ref().clone(),
             right.as_ref().clone(),
@@ -49,6 +80,7 @@ pub fn evaluate(ast_node: Statement, env: &mut Environment) -> Result<RuntimeVal
             env),
         Statement::Identifier(symbol) => eval_identifier(symbol, env),
         Statement::Program { body } => eval_program(body, env),
-        Statement::Element(element) => todo!()
+        Statement::Shape(shape) => eval_shape(shape, env),
+        Statement::Element(map) => eval_element(map, env)
     }
 }

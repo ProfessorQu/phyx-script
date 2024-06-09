@@ -1,5 +1,10 @@
+use crate::simulation::{Element, ShapeType};
+
 #[derive(Debug, Clone)]
 pub enum RuntimeValue {
-    NumberValue(f64),
-    BooleanValue(bool)
+    Elements(Vec<Element>),
+    Element(Element),
+    Shape(ShapeType),
+    Number(f32),
+    Boolean(bool)
 }

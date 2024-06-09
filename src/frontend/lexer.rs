@@ -38,10 +38,19 @@ pub fn tokenize(source_code: String) -> Result<Vec<Token>, String> {
             '+' | '-' | '*' | '/' => tokens.push(Token::BinaryOperator(c.to_string())),
             _ if c.is_numeric() => {
                 let mut num_string = c.to_string();
+                let mut decimal_in_string = false;
                 while let Some(&next) = chars.peek() {
                     if next.is_numeric() {
                         chars.next();
                         num_string.push(next);
+                    } else if next == '.' {
+                        if decimal_in_string {
+                            return Err("'.' already used in this number".to_string())
+                        }
+
+                        chars.next();
+                        num_string.push(next);
+                        decimal_in_string = true;
                     } else {
                         break
                     }

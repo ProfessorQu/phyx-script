@@ -40,8 +40,6 @@ impl Parser {
         self.tokens = tokenize(source_code)?;
         let mut body = vec![];
 
-        println!("tokens: {:?}", self.tokens);
-
         while self.not_eof() {
             body.push(self.parse_statement().expect("Invalid statement"));
         }
@@ -61,6 +59,7 @@ impl Parser {
         self.expect(Token::OpenParen, format!("The shape '{:?} have to be opened with parentheses", shape))?;
 
         let mut map = HashMap::new();
+        map.insert("shape".to_string(), Statement::Shape(shape.to_string()));
 
         while self.at() != Token::CloseParen {
             let token = self.eat();

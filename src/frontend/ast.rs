@@ -5,6 +5,7 @@ pub enum Statement {
     Program { body: Vec<Statement> },
     BinaryExpr { left: Box<Statement>, right: Box<Statement>, operator: String },
     Identifier(String),
-    NumericLiteral(f64),
+    NumericLiteral(f32),
+    Shape(String),
     Element(HashMap<String, Statement>)
 }

@@ -1,5 +1,4 @@
 circle(
-    size=100;
-    gravity=12;
-    speed=2;
+    size=10;
+    speed=1;
 )
