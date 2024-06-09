@@ -1,6 +1,5 @@
-new(
-    let shape=ball;
-    let size=10;
-    let gravity=1;
-    let speed=2;
+circle(
+    size=100;
+    gravity=12;
+    speed=2;
 )

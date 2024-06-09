@@ -1,19 +1,28 @@
 use phf::phf_map;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Token {
-    Number(i32),
+    Number(String),
     Identifier(String),
+
     BinaryOperator(String),
     Equals,
     OpenParen,
     CloseParen,
     Semicolon,
-    Let
+    Eof,
+
+    Shape(&'static str),
+    Var(&'static str)
 }
 
 static KEYWORDS: phf::Map<&'static str, Token> = phf_map! {
-    "let" => Token::Let
+    "circle" => Token::Shape("circle"),
+    "square" => Token::Shape("square"),
+
+    "size" => Token::Var("size"),
+    "speed" => Token::Var("speed"),
+    "gravity" => Token::Var("gravity")
 };
 
 pub fn tokenize(source_code: String) -> Result<Vec<Token>, String> {
@@ -38,9 +47,7 @@ pub fn tokenize(source_code: String) -> Result<Vec<Token>, String> {
                     }
                 }
 
-                if let Ok(number) = num_string.parse() {
-                    tokens.push(Token::Number(number))
-                }
+                tokens.push(Token::Number(num_string))
             }
             _ if c.is_alphabetic() => {
                 let mut id_string = c.to_string();
@@ -64,5 +71,6 @@ pub fn tokenize(source_code: String) -> Result<Vec<Token>, String> {
         }
     }
 
+    tokens.push(Token::Eof);
     Ok(tokens)
 }
