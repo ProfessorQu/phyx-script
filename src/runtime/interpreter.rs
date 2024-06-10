@@ -1,12 +1,11 @@
 use std::collections::HashMap;
 
-use crate::{simulation::ElementBuilder, frontend::ast::Statement};
+use crate::{frontend::{ast::Statement, ShapeType, VarType}, simulation::ElementBuilder};
 
 use super::{environment::Environment, values::RuntimeValue};
 
 fn eval_program(body: Vec<Statement>, env: &mut Environment) -> Result<RuntimeValue, String> {
     let mut elements = vec![];
-    // let mut last_eval = RuntimeValue::Number(0.0);
 
     for statement in body {
         if let RuntimeValue::Element(element) = evaluate(statement, env)? {
@@ -44,26 +43,37 @@ fn eval_identifier(symbol: String, env: &mut Environment) -> Result<RuntimeValue
     env.lookup_var(symbol)
 }
 
-fn eval_shape(shape: String, _env: &mut Environment) -> Result<RuntimeValue, String> {
-    Ok(RuntimeValue::Shape(shape.try_into()?))
+fn eval_shape(shape: ShapeType, _env: &mut Environment) -> Result<RuntimeValue, String> {
+    Ok(RuntimeValue::Shape(shape))
 }
 
-fn eval_element(map: HashMap<String, Statement>, env: &mut Environment) -> Result<RuntimeValue, String> {
+fn eval_element(map: HashMap<VarType, Statement>, env: &mut Environment) -> Result<RuntimeValue, String> {
     let mut builder = ElementBuilder::new();
 
     for (key, statement) in map {
         let value = evaluate(statement, env)?;
+
         if let RuntimeValue::Number(number) = value {
-            builder = match key.as_str() {
-                "size" => builder.size(number),
-                "gravity" => builder.gravity(number),
-                "speed" => builder.speed(number),
+            builder = match key {
+                VarType::Size => builder.size(number),
+                VarType::Gravity => builder.gravity(number),
+                VarType::Speed => builder.speed(number),
                 _ => return Err(format!("Invalid key '{:?} for element", key))
             };
         } else if let RuntimeValue::Shape(shape) = value {
-            if key.as_str() == "shape" {
+            if key == VarType::Shape {
                 builder = builder.shape(shape);
+            } else {
+                return Err(format!("Invalid key '{:?}' for element", key))
             }
+        } else if let RuntimeValue::Color(color) = value {
+            if key == VarType::Color {
+                builder = builder.color(color);
+            } else {
+                return Err(format!("Invalid key '{:?}' for element", key))
+            }
+        }else {
+            return Err(format!("Invalid value: {:?}", value))
         }
     }
 

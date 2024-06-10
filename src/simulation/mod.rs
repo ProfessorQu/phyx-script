@@ -1,5 +1,5 @@
 mod element;
-mod simulation;
+mod model;
 
-pub use element::{Element, ElementBuilder, ShapeType};
-pub use simulation::{model, update, view};
+pub use element::{Element, ElementBuilder};
+pub use model::{model, update, view};

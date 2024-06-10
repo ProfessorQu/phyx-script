@@ -1,23 +1,7 @@
 use nannou::prelude::*;
 use rand::Rng;
 
-#[derive(Clone, Copy, Debug)]
-pub enum ShapeType {
-    Circle,
-    Square
-}
-
-impl TryFrom<String> for ShapeType {
-    type Error = String;
-    
-    fn try_from(value: String) -> Result<Self, Self::Error> {
-        match value.as_str() {
-            "circle" => Ok(Self::Circle),
-            "square" => Ok(Self::Square),
-            _ => Err(format!("{:?} is not a valid shape", value))
-        }
-    }
-}
+use crate::frontend::ShapeType;
 
 pub struct ElementBuilder {
     shape: ShapeType,
@@ -36,7 +20,9 @@ impl ElementBuilder {
             shape: ShapeType::Circle,
             size: 10.0,
             color: WHITE,
-            dir: Vec2::new(rand::thread_rng().gen(), rand::thread_rng().gen()).normalize(),
+            dir: Vec2::new(
+                rand::thread_rng().gen::<f32>() - 0.5,
+                rand::thread_rng().gen::<f32>() - 0.5).normalize(),
             pos: Vec2::new(0.0, 0.0),
             speed: 1.0,
             gravity: 0.0
@@ -97,6 +83,9 @@ impl Element {
     pub fn update(&mut self) {
         self.pos.x += self.dir.x * self.speed;
         self.pos.y += self.dir.y * self.speed;
+
+        self.dir.y -= self.gravity;
+        self.dir = self.dir.normalize();
     }
 
     pub fn draw(&self, draw: &Draw) {

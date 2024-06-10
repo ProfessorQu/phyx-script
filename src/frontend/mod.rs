@@ -2,4 +2,5 @@ mod lexer;
 pub(crate) mod ast;
 mod parser;
 
-pub use parser::Parser;
+pub(crate) use parser::Parser;
+pub(crate) use lexer::{ShapeType, VarType};

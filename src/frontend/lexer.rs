@@ -1,5 +1,32 @@
 use phf::phf_map;
 
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum ShapeType {
+    Circle,
+    Square
+}
+
+impl TryFrom<String> for ShapeType {
+    type Error = String;
+    
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        match value.as_str() {
+            "circle" => Ok(Self::Circle),
+            "square" => Ok(Self::Square),
+            _ => Err(format!("{:?} is not a valid shape", value))
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum VarType {
+    Shape,
+    Size,
+    Speed,
+    Gravity,
+    Color
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum Token {
     Number(String),
@@ -10,19 +37,21 @@ pub enum Token {
     OpenParen,
     CloseParen,
     Semicolon,
+    Comma,
     Eof,
 
-    Shape(&'static str),
-    Var(&'static str)
+    Shape(ShapeType),
+    Var(VarType)
 }
 
 static KEYWORDS: phf::Map<&'static str, Token> = phf_map! {
-    "circle" => Token::Shape("circle"),
-    "square" => Token::Shape("square"),
+    "circle" => Token::Shape(ShapeType::Circle),
+    "square" => Token::Shape(ShapeType::Square),
 
-    "size" => Token::Var("size"),
-    "speed" => Token::Var("speed"),
-    "gravity" => Token::Var("gravity")
+    "size" => Token::Var(VarType::Size),
+    "speed" => Token::Var(VarType::Speed),
+    "gravity" => Token::Var(VarType::Gravity),
+    "color" => Token::Var(VarType::Color)
 };
 
 pub fn tokenize(source_code: String) -> Result<Vec<Token>, String> {
@@ -35,6 +64,7 @@ pub fn tokenize(source_code: String) -> Result<Vec<Token>, String> {
             ')' => tokens.push(Token::CloseParen),
             '=' => tokens.push(Token::Equals),
             ';' => tokens.push(Token::Semicolon),
+            ',' => tokens.push(Token::Comma),
             '+' | '-' | '*' | '/' => tokens.push(Token::BinaryOperator(c.to_string())),
             _ if c.is_numeric() => {
                 let mut num_string = c.to_string();

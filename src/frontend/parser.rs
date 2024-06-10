@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use super::{ast::Statement, lexer::{tokenize, Token}};
+use super::{ast::Statement, lexer::{tokenize, Token, VarType}, ShapeType};
 
 pub struct Parser {
     tokens: Vec<Token>
@@ -54,12 +54,12 @@ impl Parser {
         }
     }
 
-    fn parse_shape(&mut self, shape: &str) -> Result<Statement, String> {
+    fn parse_shape(&mut self, shape: ShapeType) -> Result<Statement, String> {
         self.eat();
         self.expect(Token::OpenParen, format!("The shape '{:?} have to be opened with parentheses", shape))?;
 
         let mut map = HashMap::new();
-        map.insert("shape".to_string(), Statement::Shape(shape.to_string()));
+        map.insert(VarType::Shape, Statement::Shape(shape));
 
         while self.at() != Token::CloseParen {
             let token = self.eat();
@@ -67,8 +67,8 @@ impl Parser {
                 Token::Var(name) => {
                     self.expect(Token::Equals, format!("The variable {:?} wasn't set", name))?;
 
-                    let number = self.parse_expr()?;
-                    map.insert(name.to_string(), number);
+                    let value = self.parse_expr()?;
+                    map.insert(name, value);
 
                     self.expect(Token::Semicolon, format!("The variable {:?} wasn't closed with a semicolon", name))?;
                 }

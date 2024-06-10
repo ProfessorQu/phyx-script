@@ -1,4 +1,13 @@
 circle(
     size=10;
-    speed=1;
+    speed=3;
+    gravity=0.01;
+    color=chocolate;
+)
+
+circle(
+    size=9;
+    speed=3;
+    gravity=0.01;
+    color=chocolate;
 )
