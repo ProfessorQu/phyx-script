@@ -3,7 +3,8 @@ use phf::phf_map;
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum ShapeType {
     Circle,
-    Square
+    Square,
+    Ring
 }
 
 impl TryFrom<String> for ShapeType {
@@ -13,6 +14,7 @@ impl TryFrom<String> for ShapeType {
         match value.as_str() {
             "circle" => Ok(Self::Circle),
             "square" => Ok(Self::Square),
+            "ring" => Ok(Self::Ring),
             _ => Err(format!("{:?} is not a valid shape", value))
         }
     }
@@ -22,6 +24,7 @@ impl TryFrom<String> for ShapeType {
 pub enum VarType {
     Shape,
     Size,
+    Stroke,
     Speed,
     Gravity,
     Color
@@ -47,11 +50,13 @@ pub enum Token {
 static KEYWORDS: phf::Map<&'static str, Token> = phf_map! {
     "circle" => Token::Shape(ShapeType::Circle),
     "square" => Token::Shape(ShapeType::Square),
+    "ring" => Token::Shape(ShapeType::Ring),
 
     "size" => Token::Var(VarType::Size),
+    "stroke" => Token::Var(VarType::Stroke),
     "speed" => Token::Var(VarType::Speed),
     "gravity" => Token::Var(VarType::Gravity),
-    "color" => Token::Var(VarType::Color)
+    "color" => Token::Var(VarType::Color),
 };
 
 pub fn tokenize(source_code: String) -> Result<Vec<Token>, String> {

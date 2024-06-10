@@ -6,6 +6,7 @@ use crate::frontend::ShapeType;
 pub struct ElementBuilder {
     shape: ShapeType,
     size: f32,
+    stroke_weight: f32,
     color: Rgb<u8>,
     pos: Vec2,
 
@@ -19,6 +20,7 @@ impl ElementBuilder {
         Self {
             shape: ShapeType::Circle,
             size: 10.0,
+            stroke_weight: 3.0,
             color: WHITE,
             dir: Vec2::new(
                 rand::thread_rng().gen::<f32>() - 0.5,
@@ -49,6 +51,11 @@ impl ElementBuilder {
         self
     }
 
+    pub fn stroke(mut self, stroke_weight: f32) -> ElementBuilder {
+        self.stroke_weight = stroke_weight;
+        self
+    }
+
     pub fn gravity(mut self, gravity: f32) -> ElementBuilder {
         self.gravity = gravity;
         self
@@ -58,9 +65,11 @@ impl ElementBuilder {
         Element {
             shape: self.shape,
             size: self.size,
+            stroke_weight: self.stroke_weight,
             color: self.color,
-            dir: self.dir,
             pos: self.pos,
+
+            dir: self.dir,
             speed: self.speed,
             gravity: self.gravity
         }
@@ -71,6 +80,7 @@ impl ElementBuilder {
 pub struct Element {
     shape: ShapeType,
     size: f32,
+    stroke_weight: f32,
     color: Rgb<u8>,
     pos: Vec2,
 
@@ -95,6 +105,17 @@ impl Element {
             }
             ShapeType::Square => {
                 draw.rect().xy(self.pos).w_h(self.size, self.size).color(self.color);
+            }
+            ShapeType::Ring => {
+                let points = (0..=360).step_by(2).map(|i| {
+                    let radian = deg_to_rad(i as f32);
+
+                    let x = radian.sin() * self.size;
+                    let y = radian.cos() * self.size;
+
+                    (pt2(x, y), self.color)
+                });
+                draw.polyline().stroke_weight(self.stroke_weight).points_colored(points);
             }
         }
     }

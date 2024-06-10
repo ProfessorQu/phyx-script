@@ -58,6 +58,7 @@ fn eval_element(map: HashMap<VarType, Statement>, env: &mut Environment) -> Resu
                 VarType::Size => builder.size(number),
                 VarType::Gravity => builder.gravity(number),
                 VarType::Speed => builder.speed(number),
+                VarType::Stroke => builder.stroke(number),
                 _ => return Err(format!("Invalid key '{:?} for element", key))
             };
         } else if let RuntimeValue::Shape(shape) = value {
