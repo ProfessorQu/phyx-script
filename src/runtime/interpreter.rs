@@ -53,32 +53,58 @@ fn eval_element(map: HashMap<VarType, Statement>, env: &mut Environment) -> Resu
     for (key, statement) in map {
         let value = evaluate(statement, env)?;
 
-        if let RuntimeValue::Number(number) = value {
-            builder = match key {
-                VarType::Size => builder.size(number),
-                VarType::Gravity => builder.gravity(number),
-                VarType::Speed => builder.speed(number),
-                VarType::Stroke => builder.stroke(number),
-                _ => return Err(format!("Invalid key '{:?} for element", key))
-            };
-        } else if let RuntimeValue::Shape(shape) = value {
-            if key == VarType::Shape {
-                builder = builder.shape(shape);
-            } else {
-                return Err(format!("Invalid key '{:?}' for element", key))
-            }
-        } else if let RuntimeValue::Color(color) = value {
-            if key == VarType::Color {
-                builder = builder.color(color);
-            } else {
-                return Err(format!("Invalid key '{:?}' for element", key))
-            }
-        }else {
-            return Err(format!("Invalid value: {:?}", value))
+        builder = match (key, value.clone()) {
+            (VarType::Size, RuntimeValue::Number(number)) => builder.size(number),
+            (VarType::Gravity, RuntimeValue::Number(number)) => builder.gravity(number),
+            (VarType::Speed, RuntimeValue::Number(number)) => builder.speed(number),
+            (VarType::Stroke, RuntimeValue::Number(number)) => builder.stroke(number),
+            (VarType::X, RuntimeValue::Number(number)) => builder.x(number),
+            (VarType::Y, RuntimeValue::Number(number)) => builder.y(number),
+            (VarType::Bounciness, RuntimeValue::Number(number)) => builder.bounciness(number),
+            (VarType::Color, RuntimeValue::Color(color)) => builder.color(color),
+            (VarType::Fixed, RuntimeValue::Boolean(boolean)) => builder.fixed(boolean),
+            (VarType::Shape, RuntimeValue::Shape(shape)) => builder.shape(shape),
+            _ => return Err(format!("Invalid key-value pair: {:?}: {:?}", key, value))
         }
+
+        // match value {
+        //     RuntimeValue::Number(number) => {
+        //         builder = match key {
+        //             VarType::Size => builder.size(number),
+        //             VarType::Gravity => builder.gravity(number),
+        //             VarType::Speed => builder.speed(number),
+        //             VarType::Stroke => builder.stroke(number),
+        //             VarType::X => builder.x(number),
+        //             VarType::Y => builder.y(number),
+        //             _ => return Err(format!("Invalid key '{:?} for element", key))
+        //         }
+        //     }
+        //     RuntimeValue::Shape(shape) => {
+        //         if key == VarType::Shape {
+        //             builder = builder.shape(shape);
+        //         } else {
+        //             return Err(format!("Invalid key '{:?}' for element", key))
+        //         }
+        //     }
+        //     RuntimeValue::Color(color) => {
+        //         if key == VarType::Color {
+        //             builder = builder.color(color);
+        //         } else {
+        //             return Err(format!("Invalid key '{:?}' for element", key))
+        //         }
+        //     }
+        //     RuntimeValue::Boolean(boolean) => {
+        //         if key == VarType::Fixed {
+        //             builder = builder.fixed(boolean);
+        //         } else {
+        //             return Err(format!("Invalid key '{:?}' for element", key))
+        //         }
+        //     }
+        //     _ => return Err(format!("Invalid value: {:?}", value))
+        // }
     }
 
-    Ok(RuntimeValue::Element(builder.build()))
+    Ok(RuntimeValue::Element(builder.build(&mut env.physics)))
 }
 
 pub fn evaluate(ast_node: Statement, env: &mut Environment) -> Result<RuntimeValue, String> {

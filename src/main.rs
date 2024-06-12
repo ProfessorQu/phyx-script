@@ -3,9 +3,7 @@
 use simulation::{update, model, view};
 
 mod frontend;
-
 mod runtime;
-
 mod simulation;
 
 fn main() -> Result<(), String> {

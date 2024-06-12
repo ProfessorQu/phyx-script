@@ -67,7 +67,7 @@ impl Parser {
                 Token::Var(name) => {
                     self.expect(Token::Equals, format!("The variable {:?} wasn't set", name))?;
 
-                    let value = self.parse_expr()?;
+                    let value = self.parse_statement()?;
                     map.insert(name, value);
 
                     self.expect(Token::Semicolon, format!("The variable {:?} wasn't closed with a semicolon", name))?;

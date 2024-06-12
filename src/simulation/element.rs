@@ -1,18 +1,22 @@
 use nannou::prelude::*;
+use rapier2d::prelude::*;
 use rand::Rng;
 
 use crate::frontend::ShapeType;
 
-pub struct ElementBuilder {
-    shape: ShapeType,
-    size: f32,
-    stroke_weight: f32,
-    color: Rgb<u8>,
-    pos: Vec2,
+use super::physics::Physics;
 
-    dir: Vec2,
-    speed: f32,
-    gravity: f32
+pub struct ElementBuilder {
+    pub shape: ShapeType,
+    pub size: f32,
+    pub stroke_weight: f32,
+    pub bounciness: f32,
+    pub color: Rgb<u8>,
+
+    pub pos: Vector<Real>,
+    pub vel: Vector<Real>,
+    pub gravity: f32,
+    pub fixed: bool,
 }
 
 impl ElementBuilder {
@@ -22,12 +26,13 @@ impl ElementBuilder {
             size: 10.0,
             stroke_weight: 3.0,
             color: WHITE,
-            dir: Vec2::new(
-                rand::thread_rng().gen::<f32>() - 0.5,
-                rand::thread_rng().gen::<f32>() - 0.5).normalize(),
-            pos: Vec2::new(0.0, 0.0),
-            speed: 1.0,
-            gravity: 0.0
+
+            bounciness: 0.5,
+
+            pos: vector![0.0, 0.0],
+            vel: vector![0.0, 0.0],
+            gravity: 0.0,
+            fixed: false,
         }
     }
 
@@ -46,13 +51,26 @@ impl ElementBuilder {
         self
     }
 
-    pub fn speed(mut self, speed: f32) -> ElementBuilder {
-        self.speed = speed;
+    pub fn stroke(mut self, stroke_weight: f32) -> ElementBuilder {
+        self.stroke_weight = stroke_weight;
         self
     }
 
-    pub fn stroke(mut self, stroke_weight: f32) -> ElementBuilder {
-        self.stroke_weight = stroke_weight;
+    pub fn x(mut self, x: f32) -> ElementBuilder {
+        self.pos.x = x;
+        self
+    }
+
+    pub fn y(mut self, y: f32) -> ElementBuilder {
+        self.pos.y = y;
+        self
+    }
+
+    pub fn speed(mut self, speed: f32) -> ElementBuilder {
+        let vel = vector!(
+            rand::thread_rng().gen_range(-1.0..=1.0),
+                rand::thread_rng().gen_range(-1.0..=1.0)).normalize() * speed;
+        self.vel = vel;
         self
     }
 
@@ -61,61 +79,78 @@ impl ElementBuilder {
         self
     }
 
-    pub fn build(&self) -> Element {
+    pub fn bounciness(mut self, bounciness: f32) -> ElementBuilder {
+        self.bounciness = bounciness;
+        self
+    }
+
+    pub fn fixed(mut self, fixed: bool) -> ElementBuilder {
+        self.fixed = fixed;
+        self
+    }
+
+    pub fn build(self, physics: &mut Physics) -> Element {
+        let handle = physics.add(&self);
+
         Element {
             shape: self.shape,
             size: self.size,
             stroke_weight: self.stroke_weight,
             color: self.color,
-            pos: self.pos,
 
-            dir: self.dir,
-            speed: self.speed,
-            gravity: self.gravity
+            handle
         }
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct Element {
     shape: ShapeType,
     size: f32,
     stroke_weight: f32,
     color: Rgb<u8>,
-    pos: Vec2,
 
-    dir: Vec2,
-    speed: f32,
-    gravity: f32
+    handle: RigidBodyHandle,
 }
 
 impl Element {
-    pub fn update(&mut self) {
-        self.pos.x += self.dir.x * self.speed;
-        self.pos.y += self.dir.y * self.speed;
-
-        self.dir.y -= self.gravity;
-        self.dir = self.dir.normalize();
-    }
-
-    pub fn draw(&self, draw: &Draw) {
+    pub fn draw(&self, draw: &Draw, physics: &Physics) {
         match self.shape {
             ShapeType::Circle => {
-                draw.ellipse().xy(self.pos).radius(self.size).color(self.color);
+                if let Some(rigidbody) = physics.bodies.get(self.handle) {
+                    let pos = rigidbody.position().translation;
+
+                    draw.ellipse()
+                        .x_y(pos.x, pos.y)
+                        .radius(self.size)
+                        .color(self.color);
+                }
             }
             ShapeType::Square => {
-                draw.rect().xy(self.pos).w_h(self.size, self.size).color(self.color);
+                if let Some(rigidbody) = physics.bodies.get(self.handle) {
+                    let pos = rigidbody.position().translation;
+
+                    draw.rect()
+                        .x_y(pos.x, pos.y)
+                        .w_h(self.size, self.size)
+                        .color(self.color);
+                }
             }
             ShapeType::Ring => {
-                let points = (0..=360).step_by(2).map(|i| {
-                    let radian = deg_to_rad(i as f32);
+                if let Some(rigidbody) = physics.bodies.get(self.handle) {
+                    let pos = rigidbody.position().translation;
 
-                    let x = radian.sin() * self.size;
-                    let y = radian.cos() * self.size;
+                    let points = (0..=360).map(|i| {
+                        let radian = deg_to_rad(i as f32);
 
-                    (pt2(x, y), self.color)
-                });
-                draw.polyline().stroke_weight(self.stroke_weight).points_colored(points);
+                        let x = pos.x + radian.sin() * self.size;
+                        let y = pos.y + radian.cos() * self.size;
+
+                        (pt2(x, y), self.color)
+                    });
+
+                    draw.polyline().stroke_weight(self.stroke_weight).points_colored(points);
+                }
             }
         }
     }

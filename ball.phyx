@@ -1,13 +1,23 @@
 ring(
-    size=300;
-    stroke=10;
-    gravity=0.01;
-    color=chocolate;
+    size=100;
+    stroke=1;
+    fixed=true;
 )
 
 circle(
-    size=20;
-    speed=3;
-    gravity=0.01;
-    color=chocolate;
+    x=-25;
+    gravity=3;
+    bounciness=1.6;
+    color=red;
+)
+circle(
+    gravity=3;
+    bounciness=1.6;
+    color=green;
+)
+circle(
+    x=25;
+    gravity=3;
+    bounciness=1.6;
+    color=blue;
 )
