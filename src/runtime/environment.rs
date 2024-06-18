@@ -66,7 +66,7 @@ impl Environment {
         } else if let Some(box_parent) = self.parent.as_mut() {
             box_parent.resolve_mut(varname)
         } else {
-            Err(format!("Failed to resolve variable '{:?}'", varname))
+            Err(format!("Failed to resolve mutable variable '{:?}'", varname))
         }
     }
 }

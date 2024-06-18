@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use super::{ast::Statement, lexer::{tokenize, Token, VarType}, ShapeType};
+use super::{ast::Statement, lexer::{tokenize, Token}, ShapeType};
 
 pub struct Parser {
     tokens: Vec<Token>
@@ -28,11 +28,10 @@ impl Parser {
         self.tokens.remove(0)
     }
 
-    fn expect(&mut self, expected: Token, error: String) -> Result<(), String> {
-        if self.eat() != expected {
-            Err(error)
-        } else {
-            Ok(())
+    fn expect(&mut self, expected: Token, error: String) -> Result<Token, String> {
+        match self.eat() {
+            token if token != expected => Err(error),
+            token => Ok(token)
         }
     }
 
@@ -49,40 +48,47 @@ impl Parser {
 
     fn parse_statement(&mut self) -> Result<Statement, String> {
         match self.at() {
-            Token::Shape(shape) => self.parse_shape(shape),
+            Token::Let => self.parse_var_declaration(),
             _ => self.parse_expr()
         }
     }
 
-    fn parse_shape(&mut self, shape: ShapeType) -> Result<Statement, String> {
+    fn parse_var_declaration(&mut self) -> Result<Statement, String>{
         self.eat();
-        self.expect(Token::OpenParen, format!("The shape '{:?} have to be opened with parentheses", shape))?;
+        let identifier = match self.eat() {
+            Token::Identifier(name) => name,
+            _ => return Err("Token after let isn't an identifier".to_string())
+        };
 
-        let mut map = HashMap::new();
-        map.insert(VarType::Shape, Statement::Shape(shape));
+        self.expect(Token::Equals, "Variable isn't set with equals sign".to_string())?;
 
-        while self.at() != Token::CloseParen {
-            let token = self.eat();
-            match token {
-                Token::Var(name) => {
-                    self.expect(Token::Equals, format!("The variable {:?} wasn't set", name))?;
+        let value = self.parse_expr()?;
+        let declaration = Statement::VarDeclaration { identifier, value: Box::new(value) };
 
-                    let value = self.parse_statement()?;
-                    map.insert(name, value);
+        self.expect(Token::Semicolon, "Variable declaration isn't stopped with a semicolon".to_string())?;
 
-                    self.expect(Token::Semicolon, format!("The variable {:?} wasn't closed with a semicolon", name))?;
-                }
-                _ => return Err(format!("Token '{:?}' is invalid in this context", token))
-            }
-        }
-
-        self.expect(Token::CloseParen, format!("The shape {:?} wasn't closed with a close parentheses", shape))?;
-
-        Ok(Statement::Element(map))
+        Ok(declaration)
+    }
+    
+    fn parse_expr(&mut self) -> Result<Statement, String> {
+        self.parse_assignment_expr()
     }
 
-    fn parse_expr(&mut self) -> Result<Statement, String> {
-        self.parse_additive_expr()
+    fn parse_assignment_expr(&mut self) -> Result<Statement, String> {
+        let left = self.parse_additive_expr()?;
+
+        if self.at() == Token::Equals {
+            self.eat();
+            let value = self.parse_assignment_expr()?;
+
+            let assignment = Statement::AssignmentExpr { assignee: Box::new(left), value: Box::new(value) };
+
+            self.expect(Token::Semicolon, "Variable assignment isn't closed with semicolon".to_string())?;
+
+            Ok(assignment)
+        } else {
+            Ok(left)
+        }
     }
 
     fn parse_additive_expr(&mut self) -> Result<Statement, String> {
@@ -131,6 +137,7 @@ impl Parser {
         let token = self.eat();
 
         match token {
+            Token::Shape(shape) => Ok(self.parse_shape(shape)?),
             Token::Identifier(value) => Ok(Statement::Identifier(value)),
             Token::Number(number) => Ok(Statement::NumericLiteral(number.parse().expect("Failed to parse"))),
             Token::OpenParen => {
@@ -143,5 +150,31 @@ impl Parser {
             }
             _ => Err(format!("Unexpected token found during parsing: {:?}", token))
         }
+    }
+
+    fn parse_shape(&mut self, shape: ShapeType) -> Result<Statement, String> {
+        self.expect(Token::OpenParen, format!("The shape '{:?}' has to be opened with parentheses", shape))?;
+
+        let mut map = HashMap::new();
+        map.insert("shape".to_string(), Statement::Shape(shape));
+
+        while self.at() != Token::CloseParen {
+            let token = self.eat();
+            match token {
+                Token::Identifier(name) => {
+                    self.expect(Token::Equals, format!("The variable {:?} wasn't set", name))?;
+
+                    let value = self.parse_statement()?;
+                    map.insert(name.clone(), value);
+
+                    self.expect(Token::Semicolon, format!("The variable {:?} wasn't closed with a semicolon", name))?;
+                }
+                _ => return Err(format!("Token '{:?}' is invalid in this context", token))
+            }
+        }
+
+        self.expect(Token::CloseParen, format!("The shape {:?} wasn't closed with a close parentheses", shape))?;
+
+        Ok(Statement::Element(map))
     }
 }

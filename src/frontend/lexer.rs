@@ -22,26 +22,14 @@ impl TryFrom<String> for ShapeType {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub enum VarType {
-    Shape,
-    Size,
-    Stroke,
-    Speed,
-    Gravity,
-    Color,
-    X,
-    Y,
-    Bounciness,
-    Fixed
-}
-
 #[derive(Clone, Debug, PartialEq)]
 pub enum Token {
     Number(String),
     Identifier(String),
 
+    Shape(ShapeType),
     BinaryOperator(String),
+
     Equals,
     OpenParen,
     CloseParen,
@@ -49,24 +37,15 @@ pub enum Token {
     Comma,
     Eof,
 
-    Shape(ShapeType),
-    Var(VarType)
+    Let
 }
 
 static KEYWORDS: phf::Map<&'static str, Token> = phf_map! {
+    "let" => Token::Let,
+
     "circle" => Token::Shape(ShapeType::Circle),
     "square" => Token::Shape(ShapeType::Square),
-    "ring" => Token::Shape(ShapeType::Ring),
-
-    "size" => Token::Var(VarType::Size),
-    "stroke" => Token::Var(VarType::Stroke),
-    "speed" => Token::Var(VarType::Speed),
-    "gravity" => Token::Var(VarType::Gravity),
-    "color" => Token::Var(VarType::Color),
-    "x" => Token::Var(VarType::X),
-    "y" => Token::Var(VarType::Y),
-    "bounciness" => Token::Var(VarType::Bounciness),
-    "fixed" => Token::Var(VarType::Fixed)
+    "ring" => Token::Shape(ShapeType::Ring)
 };
 
 fn get_number_string(c: char, chars: &mut Peekable<std::str::Chars<'_>>) -> Result<String, String> {
