@@ -31,10 +31,17 @@ pub enum Token {
     BinaryOperator(String),
 
     Equals,
+
     OpenParen,
     CloseParen,
+
+    OpenBracket,
+    CloseBracket,
+
     Semicolon,
     Comma,
+    Colon,
+
     Eof,
 
     Let
@@ -79,8 +86,11 @@ pub fn tokenize(source_code: String) -> Result<Vec<Token>, String> {
         match c {
             '(' => tokens.push(Token::OpenParen),
             ')' => tokens.push(Token::CloseParen),
+            '{' => tokens.push(Token::OpenBracket),
+            '}' => tokens.push(Token::CloseBracket),
             '=' => tokens.push(Token::Equals),
             ';' => tokens.push(Token::Semicolon),
+            ':' => tokens.push(Token::Colon),
             ',' => tokens.push(Token::Comma),
             '+' | '*' | '/' => tokens.push(Token::BinaryOperator(c.to_string())),
             '-' => {

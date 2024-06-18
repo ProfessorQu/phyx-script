@@ -13,11 +13,19 @@ pub struct Environment {
 
 impl Environment {
     pub fn new(parent: Option<Environment>) -> Self {
-        Self {
+        let no_parent = parent.is_none();
+        let mut env = Self {
             parent: Box::new(parent),
             physics: Physics::new(),
             variables: HashMap::new()
+        };
+
+        if no_parent {
+            env.declare_var("true".to_string(), RuntimeValue::Boolean(true)).expect("'true' already declared");
+            env.declare_var("false".to_string(), RuntimeValue::Boolean(false)).expect("'false' already declared");
         }
+
+        env
     }
 
     pub fn declare_var(&mut self, varname: String, value: RuntimeValue) -> Result<RuntimeValue, String> {

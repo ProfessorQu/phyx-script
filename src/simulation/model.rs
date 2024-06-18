@@ -17,10 +17,9 @@ pub fn model(_app: &App) -> Model {
 
     let mut env = Environment::new(None);
 
-    env.declare_var("true".to_string(), RuntimeValue::Boolean(true)).expect("'true' already declared");
-    env.declare_var("false".to_string(), RuntimeValue::Boolean(false)).expect("'false' already declared");
-
     let ast = parser.produce_ast(code).expect("Failed to generate ");
+
+    println!("AST: {:?}", ast);
 
     if let RuntimeValue::Elements(elements) = evaluate(ast, &mut env).expect("Failed to evaluate") {
         return Model { elements, physics: env.physics }

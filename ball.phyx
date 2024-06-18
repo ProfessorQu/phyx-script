@@ -1,1 +1,10 @@
-let x = 5;
+let color = yellow;
+let size = 100;
+let gravity = -10;
+let x = 100;
+
+circle {
+    color: blue,
+    x: 2 * x,
+    size,
+}
