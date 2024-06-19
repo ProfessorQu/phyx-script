@@ -3,11 +3,12 @@ use std::collections::HashMap;
 use nannou::color::*;
 use palette::named::from_str;
 
-use crate::{runtime::values::RuntimeValue, simulation::Physics};
+use crate::{runtime::values::RuntimeValue, simulation::{Element, Physics}};
 
 pub struct Environment {
     parent: Box<Option<Environment>>,
     pub physics: Physics,
+    pub elements: Vec<Element>,
     variables: HashMap<String, RuntimeValue>
 }
 
@@ -17,6 +18,7 @@ impl Environment {
         let mut env = Self {
             parent: Box::new(parent),
             physics: Physics::new(),
+            elements: vec![],
             variables: HashMap::new()
         };
 

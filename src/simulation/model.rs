@@ -1,6 +1,6 @@
 use std::fs;
 
-use crate::{frontend::Parser, runtime::{evaluate, Environment, RuntimeValue}};
+use crate::{frontend::Parser, runtime::{evaluate, Environment}};
 
 use super::{physics::Physics, Element};
 
@@ -20,12 +20,9 @@ pub fn model(_app: &App) -> Model {
     let ast = parser.produce_ast(code).expect("Failed to generate ");
 
     println!("AST: {:?}", ast);
+    println!("result: {:?}", evaluate(ast, &mut env).expect("Failed to evaluate"));
 
-    if let RuntimeValue::Elements(elements) = evaluate(ast, &mut env).expect("Failed to evaluate") {
-        return Model { elements, physics: env.physics }
-    }
-
-    panic!("The code doesn't return a list of elements!")
+    Model { elements: env.elements, physics: env.physics }
 }
 
 pub fn update(_app: &App, model: &mut Model, _update: Update) {

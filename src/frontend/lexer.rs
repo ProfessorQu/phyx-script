@@ -41,6 +41,7 @@ pub enum Token {
     Semicolon,
     Comma,
     Colon,
+    Dot,
 
     Eof,
 
@@ -92,6 +93,7 @@ pub fn tokenize(source_code: String) -> Result<Vec<Token>, String> {
             ';' => tokens.push(Token::Semicolon),
             ':' => tokens.push(Token::Colon),
             ',' => tokens.push(Token::Comma),
+            '.' => tokens.push(Token::Dot),
             '+' | '*' | '/' => tokens.push(Token::BinaryOperator(c.to_string())),
             '-' => {
                 let mut number = false;

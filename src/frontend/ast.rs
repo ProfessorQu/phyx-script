@@ -8,6 +8,9 @@ pub enum Statement {
     VarDeclaration { identifier: String, value: Box<Statement> },
 
     AssignmentExpr { assignee: Box<Statement>, value: Box<Statement> },
+    MemberExpr { object: Box<Statement>, property: Box<Statement> },
+    CallExpr { args: Vec<Statement>, caller: Box<Statement> },
+
     BinaryExpr { left: Box<Statement>, right: Box<Statement>, operator: String },
     Identifier(String),
     NumericLiteral(f32),

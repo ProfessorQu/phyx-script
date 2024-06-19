@@ -1,14 +1,15 @@
+use std::{collections::HashMap, fmt::Debug};
+
 use nannou::color::Rgb;
 
-use crate::{frontend::ShapeType, simulation::Element};
+use crate::frontend::ShapeType;
 
 #[derive(Debug, Clone)]
 pub enum RuntimeValue {
     Number(f32),
     Boolean(bool),
 
-    Element(Element),
-    Elements(Vec<Element>),
+    Element(HashMap<String, RuntimeValue>),
 
     Shape(ShapeType),
     Color(Rgb<u8>),

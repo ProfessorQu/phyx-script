@@ -111,7 +111,7 @@ impl Parser {
     }
 
     fn parse_multiplicative_expr(&mut self) -> Result<Statement, String> {
-        let mut left = self.parse_primary_expr()?;
+        let mut left = self.parse_call_member_expr()?;
 
         while let Token::BinaryOperator(operator) = self.at() {
             if operator != "*" && operator != "/" {
@@ -119,7 +119,7 @@ impl Parser {
             }
 
             self.eat();
-            let right = self.parse_primary_expr()?;
+            let right = self.parse_call_member_expr()?;
 
             left = Statement::BinaryExpr {
                 left: Box::new(left),
@@ -129,6 +129,73 @@ impl Parser {
         }
 
         Ok(left)
+    }
+
+    fn parse_call_member_expr(&mut self) -> Result<Statement, String> {
+        let member = self.parse_member_expr()?;
+        
+        if self.at() == Token::OpenParen {
+            self.parse_call_expr(member)
+        } else {
+            Ok(member)
+        }
+    }
+
+    fn parse_call_expr(&mut self, caller: Statement) -> Result<Statement, String> {
+        let mut call_expr = Statement::CallExpr {
+            args: self.parse_args()?,
+            caller: Box::new(caller)
+        };
+
+        if self.at() == Token::OpenParen {
+            call_expr = self.parse_call_expr(call_expr)?;
+        }
+
+        Ok(call_expr)
+    }
+
+    fn parse_args(&mut self) -> Result<Vec<Statement>, String> {
+        self.expect(Token::OpenParen, "Expected open parenthesis".to_string())?;
+
+        let args = match self.at() {
+            Token::CloseParen => vec![],
+            _ => self.parse_arguments_list()?
+        };
+
+        self.expect(Token::CloseParen, "Missing closing parenthesis".to_string())?;
+
+        Ok(args)
+    }
+
+    fn parse_arguments_list(&mut self) -> Result<Vec<Statement>, String> {
+        let mut args = vec![self.parse_assignment_expr()?];
+
+        while self.at() == Token::Comma {
+            self.eat();
+            args.push(self.parse_assignment_expr()?);
+        }
+
+        Ok(args)
+    }
+
+    fn parse_member_expr(&mut self) -> Result<Statement, String> {
+        let mut object = self.parse_primary_expr()?;
+
+        while self.at() == Token::Dot {
+            self.eat();
+            let property = self.parse_primary_expr()?;
+            match property {
+                Statement::Identifier(_) => (),
+                statement => return Err(format!("Invalid statement '{:?}'", statement))
+            }
+
+            object = Statement::MemberExpr {
+                object: Box::new(object),
+                property: Box::new(property)
+            };
+        }
+
+        Ok(object)
     }
 
     fn parse_primary_expr(&mut self) -> Result<Statement, String> {
@@ -157,7 +224,6 @@ impl Parser {
         map.insert("shape".to_string(), Statement::Shape(shape));
 
         while self.at() != Token::CloseBracket {
-            println!("{:?}", self.at());
             let key = match self.eat() {
                 Token::Identifier(name) => name,
                 token => return Err(format!("Invalid token '{:?}', should be identifier", token)),

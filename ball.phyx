@@ -3,8 +3,10 @@ let size = 100;
 let gravity = -10;
 let x = 100;
 
-circle {
+let c = circle {
     color: blue,
     x: 2 * x,
     size,
-}
+};
+
+c.gravity = 3
