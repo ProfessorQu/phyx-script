@@ -2,27 +2,36 @@ use std::fs;
 
 use crate::{frontend::Parser, runtime::{evaluate, Environment}};
 
-use super::{physics::Physics, Element};
+use super::{physics::Physics, Object};
 
 use nannou::prelude::*;
 
 pub struct Model {
     physics: Physics,
-    elements: Vec<Element>
+    objects: Vec<Object>
 }
 
 pub fn model(_app: &App) -> Model {
     let code = fs::read_to_string("ball.phyx").expect("Failed to read file");
     let mut parser = Parser::new();
 
-    let mut env = Environment::new(None);
+    let mut env = Environment::new_global();
 
     let ast = parser.produce_ast(code).expect("Failed to generate ");
 
     println!("AST: {:?}", ast);
     println!("result: {:?}", evaluate(ast, &mut env).expect("Failed to evaluate"));
 
-    Model { elements: env.elements, physics: env.physics }
+    let objects = match env.objects {
+        Some(objects) => objects,
+        None => panic!("No objects")
+    };
+    let physics = match env.physics {
+        Some(physics) => physics,
+        None => panic!("No physics")
+    };
+
+    Model { objects, physics }
 }
 
 pub fn update(_app: &App, model: &mut Model, _update: Update) {
@@ -34,8 +43,8 @@ pub fn view(app: &App, model: &Model, frame: Frame) {
 
     draw.background().color(BLACK);
 
-    for element in &model.elements {
-        element.draw(&draw, &model.physics);
+    for object in &model.objects {
+        object.draw(&draw, &model.physics);
     }
 
     draw.to_frame(app, &frame).expect("Failed to draw to frame");

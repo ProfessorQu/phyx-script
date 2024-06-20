@@ -1,7 +1,7 @@
-mod element;
 mod model;
+mod object;
 mod physics;
 
-pub use element::{Element, ElementBuilder};
 pub use model::{model, update, view};
+pub use object::{Object, ObjectBuilder};
 pub use physics::Physics;

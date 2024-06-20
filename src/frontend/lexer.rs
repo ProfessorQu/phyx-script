@@ -29,6 +29,7 @@ pub enum Token {
 
     Shape(ShapeType),
     BinaryOperator(String),
+    UnaryOperator(String),
 
     Equals,
 
@@ -96,18 +97,12 @@ pub fn tokenize(source_code: String) -> Result<Vec<Token>, String> {
             '.' => tokens.push(Token::Dot),
             '+' | '*' | '/' => tokens.push(Token::BinaryOperator(c.to_string())),
             '-' => {
-                let mut number = false;
-                while let Some(c2) = chars.peek() {
-                    if c2.is_numeric() {
-                        tokens.push(Token::Number(get_number_string(c, &mut chars)?));
-                        number = true;
+                if let Some(c2) = chars.peek() {
+                    if c2.is_whitespace() {
+                        tokens.push(Token::BinaryOperator(c.to_string()));
                     } else {
-                        break
+                        tokens.push(Token::UnaryOperator(c.to_string()));
                     }
-                }
-
-                if !number {
-                    tokens.push(Token::BinaryOperator(c.to_string()));
                 }
             }
             _ if c.is_numeric() => {

@@ -3,7 +3,7 @@ use rapier2d::prelude::*;
 
 use crate::frontend::ShapeType;
 
-use super::ElementBuilder;
+use super::ObjectBuilder;
 
 pub struct Physics {
     pipeline: PhysicsPipeline,
@@ -36,7 +36,7 @@ impl Physics {
         }
     }
 
-    pub fn add(&mut self, builder: &ElementBuilder) -> RigidBodyHandle {
+    pub fn add(&mut self, builder: &ObjectBuilder) -> RigidBodyHandle {
         let rigidbody = if builder.fixed {
             RigidBodyBuilder::fixed()
         } else {

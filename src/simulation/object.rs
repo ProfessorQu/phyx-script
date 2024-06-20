@@ -6,7 +6,7 @@ use crate::frontend::ShapeType;
 
 use super::physics::Physics;
 
-pub struct ElementBuilder {
+pub struct ObjectBuilder {
     pub shape: ShapeType,
     pub size: f32,
     pub stroke_weight: f32,
@@ -19,7 +19,7 @@ pub struct ElementBuilder {
     pub fixed: bool,
 }
 
-impl ElementBuilder {
+impl ObjectBuilder {
     pub fn new() -> Self {
         Self {
             shape: ShapeType::Circle,
@@ -36,37 +36,37 @@ impl ElementBuilder {
         }
     }
 
-    pub fn shape(mut self, shape: ShapeType) -> ElementBuilder {
+    pub fn shape(mut self, shape: ShapeType) -> ObjectBuilder {
         self.shape = shape;
         self
     }
 
-    pub fn size(mut self, size: f32) -> ElementBuilder {
+    pub fn size(mut self, size: f32) -> ObjectBuilder {
         self.size = size;
         self
     }
 
-    pub fn color(mut self, color: Rgb<u8>) -> ElementBuilder {
+    pub fn color(mut self, color: Rgb<u8>) -> ObjectBuilder {
         self.color = color;
         self
     }
 
-    pub fn stroke(mut self, stroke_weight: f32) -> ElementBuilder {
+    pub fn stroke(mut self, stroke_weight: f32) -> ObjectBuilder {
         self.stroke_weight = stroke_weight;
         self
     }
 
-    pub fn x(mut self, x: f32) -> ElementBuilder {
+    pub fn x(mut self, x: f32) -> ObjectBuilder {
         self.pos.x = x;
         self
     }
 
-    pub fn y(mut self, y: f32) -> ElementBuilder {
+    pub fn y(mut self, y: f32) -> ObjectBuilder {
         self.pos.y = y;
         self
     }
 
-    pub fn speed(mut self, speed: f32) -> ElementBuilder {
+    pub fn speed(mut self, speed: f32) -> ObjectBuilder {
         let vel = vector!(
             rand::thread_rng().gen_range(-1.0..=1.0),
                 rand::thread_rng().gen_range(-1.0..=1.0)).normalize() * speed;
@@ -74,25 +74,25 @@ impl ElementBuilder {
         self
     }
 
-    pub fn gravity(mut self, gravity: f32) -> ElementBuilder {
+    pub fn gravity(mut self, gravity: f32) -> ObjectBuilder {
         self.gravity = gravity;
         self
     }
 
-    pub fn bounciness(mut self, bounciness: f32) -> ElementBuilder {
+    pub fn bounciness(mut self, bounciness: f32) -> ObjectBuilder {
         self.bounciness = bounciness;
         self
     }
 
-    pub fn fixed(mut self, fixed: bool) -> ElementBuilder {
+    pub fn fixed(mut self, fixed: bool) -> ObjectBuilder {
         self.fixed = fixed;
         self
     }
 
-    pub fn build(self, physics: &mut Physics) -> Element {
+    pub fn build(self, physics: &mut Physics) -> Object {
         let handle = physics.add(&self);
 
-        Element {
+        Object {
             shape: self.shape,
             size: self.size,
             stroke_weight: self.stroke_weight,
@@ -104,7 +104,7 @@ impl ElementBuilder {
 }
 
 #[derive(Debug, Clone)]
-pub struct Element {
+pub struct Object {
     shape: ShapeType,
     size: f32,
     stroke_weight: f32,
@@ -113,7 +113,7 @@ pub struct Element {
     handle: RigidBodyHandle,
 }
 
-impl Element {
+impl Object {
     pub fn draw(&self, draw: &Draw, physics: &Physics) {
         match self.shape {
             ShapeType::Circle => {

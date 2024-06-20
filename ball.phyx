@@ -1,12 +1,12 @@
-let color = yellow;
-let size = 100;
-let gravity = -10;
-let x = 100;
-
 let c = circle {
-    color: blue,
-    x: 2 * x,
-    size,
+    gravity: 5,
+    bounciness: 1.6,
+    color: hsv(90.0, 1.0, 1.0)
 };
 
-c.gravity = 3
+add(c)
+
+add(ring {
+    fixed: true,
+    size: 100
+})

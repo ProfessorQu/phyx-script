@@ -133,7 +133,7 @@ impl Parser {
 
     fn parse_call_member_expr(&mut self) -> Result<Statement, String> {
         let member = self.parse_member_expr()?;
-        
+
         if self.at() == Token::OpenParen {
             self.parse_call_expr(member)
         } else {
@@ -205,6 +205,7 @@ impl Parser {
             Token::Shape(shape) => Ok(self.parse_shape(shape)?),
             Token::Identifier(value) => Ok(Statement::Identifier(value)),
             Token::Number(number) => Ok(Statement::NumericLiteral(number.parse().expect("Failed to parse"))),
+            Token::UnaryOperator(operator) => Ok(self.parse_unary_expr(operator)?),
             Token::OpenParen => {
                 let value = self.parse_expr()?;
                 if let Token::CloseParen = self.eat() {
@@ -249,28 +250,17 @@ impl Parser {
                 }
                 token => return Err(format!("Invalid token '{:?}', should be ':', ',' or '}}'", token))
             }
-            // let token = self.eat();
-            // if let Token::Identifier(name) = token {
-            //     let token = self.at();
-            //     if token == Token::Colon {
-            //         // self.expect(Token::Colon, format!("The variable '{:?}' wasn't set", name))?;
-
-            //         let value = self.parse_statement()?;
-            //         map.insert(name.clone(), value);
-
-            //         if self.at() != Token::CloseBracket {
-            //             self.expect(Token::Comma, format!("The variable '{:?}' wasn't split with a comma", name))?;
-            //         }
-            //     } else if token == Token::Comma {
-            //         map.insert(name.clone(), Statement::Identifier(name.clone()));
-            //     }
-            // } else {
-            //     return Err(format!("Token '{:?}' is invalid in this context", token))
-            // }
         }
 
         self.expect(Token::CloseBracket, format!("The shape {:?} wasn't closed with a close bracket", shape))?;
 
-        Ok(Statement::Element(map))
+        Ok(Statement::Object(map))
     }
+
+    fn parse_unary_expr(&mut self, operator: String) -> Result<Statement, String> {
+        let value = self.parse_expr()?;
+
+        Ok(Statement::UnaryExpr { value: Box::new(value), operator })
+    }
+
 }

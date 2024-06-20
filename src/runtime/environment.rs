@@ -3,29 +3,49 @@ use std::collections::HashMap;
 use nannou::color::*;
 use palette::named::from_str;
 
-use crate::{runtime::values::RuntimeValue, simulation::{Element, Physics}};
+use crate::{runtime::values::RuntimeValue, simulation::{Object, Physics}};
+
+use super::native_fns;
 
 pub struct Environment {
-    parent: Box<Option<Environment>>,
-    pub physics: Physics,
-    pub elements: Vec<Element>,
+    parent: Box<Option<Self>>,
+    pub physics: Option<Physics>,
+    pub objects: Option<Vec<Object>>,
     variables: HashMap<String, RuntimeValue>
 }
 
 impl Environment {
-    pub fn new(parent: Option<Environment>) -> Self {
-        let no_parent = parent.is_none();
+    pub fn new(parent: Self) -> Self {
+        Self {
+            parent: Box::new(Some(parent)),
+            physics: None,
+            objects: None,
+            variables: HashMap::new()
+        }
+    }
+
+    pub fn new_global() -> Self {
+        let physics = Some(Physics::new());
+        let objects = Some(vec![]);
+
         let mut env = Self {
-            parent: Box::new(parent),
-            physics: Physics::new(),
-            elements: vec![],
+            parent: Box::new(None),
+            physics,
+            objects,
             variables: HashMap::new()
         };
 
-        if no_parent {
-            env.declare_var("true".to_string(), RuntimeValue::Boolean(true)).expect("'true' already declared");
-            env.declare_var("false".to_string(), RuntimeValue::Boolean(false)).expect("'false' already declared");
-        }
+        env.declare_var("true".to_string(), RuntimeValue::Boolean(true)).expect("'true' already declared");
+        env.declare_var("false".to_string(), RuntimeValue::Boolean(false)).expect("'false' already declared");
+
+        env.declare_var("print".to_string(), RuntimeValue::NativeFn(|args, _env| {
+            println!("{:?}", args);
+            RuntimeValue::Number(0.0)
+        })).expect("'print' already declared");
+
+        env.declare_var("rgb".to_string(), RuntimeValue::NativeFn(native_fns::rgb)).expect("'rgb' already declared");
+        env.declare_var("hsv".to_string(), RuntimeValue::NativeFn(native_fns::hsv)).expect("'rgb' already declared");
+        env.declare_var("add".to_string(), RuntimeValue::NativeFn(native_fns::add)).expect("'add' already declared");
 
         env
     }

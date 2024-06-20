@@ -12,9 +12,10 @@ pub enum Statement {
     CallExpr { args: Vec<Statement>, caller: Box<Statement> },
 
     BinaryExpr { left: Box<Statement>, right: Box<Statement>, operator: String },
+    UnaryExpr { value: Box<Statement>, operator: String },
     Identifier(String),
     NumericLiteral(f32),
 
     Shape(ShapeType),
-    Element(HashMap<String, Statement>)
+    Object(HashMap<String, Statement>)
 }

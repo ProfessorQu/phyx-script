@@ -1,8 +1,9 @@
-mod values;
-mod interpreter;
-mod environment;
 mod eval;
+mod environment;
+mod interpreter;
+mod native_fns;
+mod values;
 
-pub use values::RuntimeValue;
-pub use interpreter::evaluate;
 pub use environment::Environment;
+pub use interpreter::evaluate;
+pub use values::RuntimeValue;
