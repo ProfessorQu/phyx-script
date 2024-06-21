@@ -16,7 +16,7 @@ pub fn eval_var_declaration(identifier: String, value: &Statement, env: &mut Env
 }
 
 pub fn eval_function_declaration(name: String, parameters: Vec<String>, body: Vec<Statement>, env: &mut Environment) -> Result<RuntimeValue, String> {
-    let func = RuntimeValue::Function { name: name.clone(), parameters, body, declaration_env: Box::new(env.clone()) };
+    let func = RuntimeValue::Function { name: name.clone(), parameters, body, declaration_env: env.clone() };
 
     env.declare_var(name, func)
 }

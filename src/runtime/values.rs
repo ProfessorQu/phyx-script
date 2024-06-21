@@ -12,7 +12,7 @@ pub enum RuntimeValue {
     Boolean(bool),
 
     NativeFn(fn(args: Vec<RuntimeValue>, env: &mut Environment) -> RuntimeValue),
-    Function{ name: String, parameters: Vec<String>, body: Vec<Statement>, declaration_env: Box<Environment> },
+    Function{ name: String, parameters: Vec<String>, body: Vec<Statement>, declaration_env: Environment },
     Range(usize),
 
     Object(HashMap<String, RuntimeValue>),

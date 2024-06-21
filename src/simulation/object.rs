@@ -1,8 +1,10 @@
+use std::collections::HashMap;
+
 use nannou::prelude::*;
 use rapier2d::prelude::*;
 use rand::Rng;
 
-use crate::frontend::ShapeType;
+use crate::{frontend::ShapeType, runtime::RuntimeValue};
 
 use super::physics::Physics;
 
@@ -34,6 +36,27 @@ impl ObjectBuilder {
             gravity: 0.0,
             fixed: false,
         }
+    }
+
+    pub fn from_map(map: HashMap<String, RuntimeValue>, physics: &mut Physics) -> Object {
+        let mut builder = ObjectBuilder::new();
+        for (key, value) in map {
+            builder = match (key.as_str(), value.clone()) {
+                ("size", RuntimeValue::Number(number)) => builder.size(number),
+                ("gravity", RuntimeValue::Number(number)) => builder.gravity(number),
+                ("speed", RuntimeValue::Number(number)) => builder.speed(number),
+                ("stroke", RuntimeValue::Number(number)) => builder.stroke(number),
+                ("x", RuntimeValue::Number(number)) => builder.x(number),
+                ("y", RuntimeValue::Number(number)) => builder.y(number),
+                ("bounciness", RuntimeValue::Number(number)) => builder.bounciness(number),
+                ("color", RuntimeValue::Color(color)) => builder.color(color),
+                ("fixed", RuntimeValue::Boolean(boolean)) => builder.fixed(boolean),
+                ("shape", RuntimeValue::Shape(shape)) => builder.shape(shape),
+                _ => panic!("Invalid key-value pair: {:?}: {:?}", key, value)
+            }
+        }
+
+        builder.build(physics)
     }
 
     pub fn shape(mut self, shape: ShapeType) -> ObjectBuilder {

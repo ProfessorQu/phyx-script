@@ -1,6 +1,6 @@
 use std::fs;
 
-use crate::{frontend::Parser, runtime::{evaluate, Environment}};
+use crate::{frontend::Parser, runtime::{evaluate, Environment, RuntimeValue}, simulation::ObjectBuilder};
 
 use super::{physics::Physics, Object};
 
@@ -22,16 +22,28 @@ pub fn model(_app: &App) -> Model {
     println!("AST: {:?}", ast);
     println!("result: {:?}", evaluate(ast, &mut env).expect("Failed to evaluate"));
 
-    let objects = match env.objects {
-        Some(objects) => objects.borrow().to_vec(),
-        None => panic!("No objects")
-    };
-    let physics = match env.physics {
-        Some(physics) => physics.as_ref().clone(),
-        None => panic!("No physics")
+    let mut physics = Physics::new();
+    let values = match env.lookup_var("objects".to_string()).expect("Failed to get objects") {
+        RuntimeValue::Objects(objects) => objects,
+        _ => panic!("Invalid 'objects'")
     };
 
+    let mut objects = vec![];
+    add_objects(&values, &mut objects, &mut physics);
+
     Model { objects, physics }
+}
+
+fn add_objects(values: &Vec<RuntimeValue>, objects: &mut Vec<Object>, physics: &mut Physics) {
+    for value in values {
+        if let RuntimeValue::Object(object_map) = value {
+            objects.push(ObjectBuilder::from_map(object_map.clone(), physics));
+        } else if let RuntimeValue::Objects(values) = value {
+            add_objects(values, objects, physics);
+        } else {
+            panic!("Not an object: {:?}", value);
+        }
+    }
 }
 
 pub fn update(_app: &App, model: &mut Model, _update: Update) {

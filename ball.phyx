@@ -1,8 +1,17 @@
-for i in range(10) {
-    print(i)
+fn create() {
+    for i in range(20) {
+        add(circle {
+            gravity: 3,
+            color: hsv(i * 18, 1, 1),
+            size: random(10, 20),
+            bounciness: random(0.9, 1.7)
+        })
+    }
 }
 
+add(create())
+
 add(ring {
-    size: 100,
-    fixed: true
+    size: 200,
+    fixed: true,
 })

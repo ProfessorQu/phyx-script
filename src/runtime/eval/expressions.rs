@@ -83,7 +83,7 @@ pub fn eval_call_expr(args: Vec<Statement>, caller: &Statement, env: &mut Enviro
     match evaluate(caller.clone(), env)? {
         RuntimeValue::NativeFn(func) => Ok(func(args, env)),
         RuntimeValue::Function { name, parameters, body, declaration_env } => {
-            let mut scope = Environment::new(*declaration_env);
+            let mut scope = Environment::new(declaration_env.clone());
 
             let num_params = parameters.len();
             if num_params != args.len() {
