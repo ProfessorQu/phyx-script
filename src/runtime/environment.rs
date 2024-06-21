@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{cell::RefCell, collections::HashMap, fmt::Debug, rc::Rc};
 
 use nannou::color::*;
 use palette::named::from_str;
@@ -8,16 +8,16 @@ use crate::{runtime::values::RuntimeValue, simulation::{Object, Physics}};
 use super::native_fns;
 
 pub struct Environment {
-    parent: Box<Option<Self>>,
-    pub physics: Option<Physics>,
-    pub objects: Option<Vec<Object>>,
+    parent: Option<Box<Self>>,
+    pub physics: Option<Rc<RefCell<Physics>>>,
+    pub objects: Option<Rc<RefCell<Vec<Object>>>>,
     variables: HashMap<String, RuntimeValue>
 }
 
 impl Environment {
     pub fn new(parent: Self) -> Self {
         Self {
-            parent: Box::new(Some(parent)),
+            parent: Some(Box::new(parent)),
             physics: None,
             objects: None,
             variables: HashMap::new()
@@ -25,11 +25,11 @@ impl Environment {
     }
 
     pub fn new_global() -> Self {
-        let physics = Some(Physics::new());
-        let objects = Some(vec![]);
+        let physics = Some(Rc::new(RefCell::new(Physics::new())));
+        let objects = Some(Rc::new(RefCell::new(vec![])));
 
         let mut env = Self {
-            parent: Box::new(None),
+            parent: None,
             physics,
             objects,
             variables: HashMap::new()
@@ -46,6 +46,7 @@ impl Environment {
         env.declare_var("rgb".to_string(), RuntimeValue::NativeFn(native_fns::rgb)).expect("'rgb' already declared");
         env.declare_var("hsv".to_string(), RuntimeValue::NativeFn(native_fns::hsv)).expect("'rgb' already declared");
         env.declare_var("add".to_string(), RuntimeValue::NativeFn(native_fns::add)).expect("'add' already declared");
+        env.declare_var("range".to_string(), RuntimeValue::NativeFn(native_fns::range)).expect("'range' already declared");
 
         env
     }
@@ -97,6 +98,44 @@ impl Environment {
             box_parent.resolve_mut(varname)
         } else {
             Err(format!("Failed to resolve mutable variable '{:?}'", varname))
+        }
+    }
+
+    pub fn resolve_objects(&self) -> Result<Rc<RefCell<Vec<Object>>>, String> {
+        if let Some(objects) = &self.objects {
+            Ok(objects.clone())
+        } else if let Some(parent) = &self.parent {
+            parent.resolve_objects()
+        } else {
+            Err("Failed to resolve objects".to_string())
+        }
+    }
+
+    pub fn resolve_physics(&self) -> Result<Rc<RefCell<Physics>>, String> {
+        if let Some(physics) = &self.physics {
+            Ok(physics.clone())
+        } else if let Some(parent) = &self.parent {
+            parent.resolve_physics()
+        } else {
+            Err("Failed to resolve physics".to_string())
+        }
+    }
+}
+
+impl Debug for Environment {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("Environment\n")?;
+        f.write_str(format!("{:?}", self.variables).as_str())
+    }
+}
+
+impl Clone for Environment {
+    fn clone(&self) -> Self {
+        Self {
+            parent: self.parent.clone(),
+            physics: None,
+            objects: None,
+            variables: self.variables.clone()
         }
     }
 }

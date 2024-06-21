@@ -23,11 +23,11 @@ pub fn model(_app: &App) -> Model {
     println!("result: {:?}", evaluate(ast, &mut env).expect("Failed to evaluate"));
 
     let objects = match env.objects {
-        Some(objects) => objects,
+        Some(objects) => objects.borrow().to_vec(),
         None => panic!("No objects")
     };
     let physics = match env.physics {
-        Some(physics) => physics,
+        Some(physics) => physics.as_ref().clone(),
         None => panic!("No physics")
     };
 

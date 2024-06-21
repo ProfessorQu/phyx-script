@@ -46,11 +46,17 @@ pub enum Token {
 
     Eof,
 
-    Let
+    Let,
+    Fn,
+    For,
+    In
 }
 
 static KEYWORDS: phf::Map<&'static str, Token> = phf_map! {
     "let" => Token::Let,
+    "fn" => Token::Fn,
+    "for" => Token::For,
+    "in" => Token::In,
 
     "circle" => Token::Shape(ShapeType::Circle),
     "square" => Token::Shape(ShapeType::Square),

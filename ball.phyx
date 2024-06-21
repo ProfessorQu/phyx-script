@@ -1,12 +1,8 @@
-let c = circle {
-    gravity: 5,
-    bounciness: 1.6,
-    color: hsv(90.0, 1.0, 1.0)
-};
-
-add(c)
+for i in range(10) {
+    print(i)
+}
 
 add(ring {
-    fixed: true,
-    size: 100
+    size: 100,
+    fixed: true
 })

@@ -79,12 +79,32 @@ pub fn eval_call_expr(args: Vec<Statement>, caller: &Statement, env: &mut Enviro
         |arg| evaluate(arg.clone(), env)
                             .unwrap_or_else(|_| panic!("Failed to evaluate arg: '{:?}'", arg))
     ).collect();
-    let func = match evaluate(caller.clone(), env)? {
-        RuntimeValue::NativeFn(func) => func,
-        runtimevalue => return Err(format!("Invalid runtimevalue: '{:?}'", runtimevalue))
-    };
 
-    Ok(func(args, env))
+    match evaluate(caller.clone(), env)? {
+        RuntimeValue::NativeFn(func) => Ok(func(args, env)),
+        RuntimeValue::Function { name, parameters, body, declaration_env } => {
+            let mut scope = Environment::new(*declaration_env);
+
+            let num_params = parameters.len();
+            if num_params != args.len() {
+                return Err(format!("The function '{}' takes {} arguments but {} were given", name, num_params, args.len()))
+            }
+
+            for i in 0..num_params {
+                let varname = parameters[i].clone();
+                scope.declare_var(varname, args[i].clone())?;
+            }
+
+            let mut result = RuntimeValue::Number(0.0);
+
+            for statement in body {
+                result = evaluate(statement, &mut scope)?;
+            }
+            
+            Ok(result)
+        }
+        runtimevalue => Err(format!("Cannot call value that is not a function: '{:?}'", runtimevalue))
+    }
 }
 
 pub fn eval_member_expr(object: &Statement, property: &Statement, env: &mut Environment) -> Result<RuntimeValue, String> {

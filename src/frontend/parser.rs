@@ -49,6 +49,8 @@ impl Parser {
     fn parse_statement(&mut self) -> Result<Statement, String> {
         match self.at() {
             Token::Let => self.parse_var_declaration(),
+            Token::Fn => self.parse_function_declaration(),
+            Token::For => self.parse_for_loop(),
             _ => self.parse_expr()
         }
     }
@@ -68,6 +70,56 @@ impl Parser {
         self.expect(Token::Semicolon, "Variable declaration isn't stopped with a semicolon".to_string())?;
 
         Ok(declaration)
+    }
+
+    fn parse_function_declaration(&mut self) -> Result<Statement, String> {
+        self.eat();
+        let name = match self.eat() {
+            Token::Identifier(name) => name,
+            token => return Err(format!("Invalid token '{:?}'", token))
+        };
+
+        let args = self.parse_args()?;
+        let parameters: Vec<String> = args.iter().map(|arg| {
+            match arg {
+                Statement::Identifier(name) => name.clone(),
+                _ => panic!("Argument '{:?}' is not an identifier", arg)
+            }
+        }).collect();
+
+        self.expect(Token::OpenBracket, "Expected open bracket after function declaration".to_string())?;
+
+        let mut body = vec![];
+        while self.at() != Token::CloseBracket && self.not_eof() {
+            body.push(self.parse_statement()?);
+        }
+
+        self.expect(Token::CloseBracket, "Expected close bracket after function body".to_string())?;
+
+        Ok(Statement::FunctionDeclaration { name, parameters, body })
+    }
+
+    fn parse_for_loop(&mut self) -> Result<Statement, String> {
+        self.eat();
+        let loop_var = match self.eat() {
+            Token::Identifier(name) => name,
+            token => return Err(format!("Expected identifier, got: {:?}", token))
+        };
+
+        self.expect(Token::In, "Expected 'in' after for loop".to_string())?;
+
+        let range = self.parse_statement()?;
+
+        self.expect(Token::OpenBracket, "Expected open bracket after function declaration".to_string())?;
+
+        let mut body = vec![];
+        while self.at() != Token::CloseBracket && self.not_eof() {
+            body.push(self.parse_statement()?);
+        }
+
+        self.expect(Token::CloseBracket, "Expected close bracket after function body".to_string())?;
+
+        Ok(Statement::ForLoop { loop_var, range: Box::new(range), body })
     }
     
     fn parse_expr(&mut self) -> Result<Statement, String> {

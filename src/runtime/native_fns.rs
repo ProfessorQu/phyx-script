@@ -55,14 +55,10 @@ pub fn hsv(args: Vec<RuntimeValue>, _env: &mut Environment) -> RuntimeValue {
 }
 
 pub fn add(args: Vec<RuntimeValue>, env: &mut Environment) -> RuntimeValue {
-    let objects = match &mut env.objects {
-        Some(objects) => objects,
-        None => panic!("No objects to add to")
-    };
-    let physics = match &mut env.physics {
-        Some(physics) => physics,
-        None => panic!("No physics in the environment")
-    };
+    let objects_ref = env.resolve_objects().expect("Failed to resolve objects");
+    let mut objects = objects_ref.borrow_mut();
+    let physics_ref = env.resolve_physics().expect("Failed to get physics");
+    let mut physics = physics_ref.borrow_mut();
 
     for arg in &args {
         let map = match arg {
@@ -87,9 +83,22 @@ pub fn add(args: Vec<RuntimeValue>, env: &mut Environment) -> RuntimeValue {
             }
         }
 
-        let object = builder.build(physics);
+        let object = builder.build(&mut physics);
         objects.push(object);
     }
 
     RuntimeValue::Number(0.0)
+}
+
+pub fn range(args: Vec<RuntimeValue>, _env: &mut Environment) -> RuntimeValue {
+    match args.len() {
+        len if len != 1 => panic!("Invalid number of arguments to range takes 1, given {}", len),
+        _ => {
+            if let RuntimeValue::Number(number) = args[0] {
+                RuntimeValue::Range(number as usize)
+            } else {
+                panic!("Argument: {:?} is not a number", args[0])
+            }
+        }
+    }
 }
