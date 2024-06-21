@@ -215,7 +215,7 @@ impl Parser {
         let mut left = self.parse_call_member_expr()?;
 
         while let Token::BinaryOperator(operator) = self.at() {
-            if operator != "*" && operator != "/" {
+            if operator != "*" && operator != "/" && operator != "%" {
                 break
             }
 

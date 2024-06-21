@@ -139,3 +139,27 @@ pub fn random(args: Vec<RuntimeValue>, _env: &mut Environment) -> RuntimeValue {
         _ => panic!("Invalid number of arguments to 'random'")
     }
 }
+
+pub fn floor(args: Vec<RuntimeValue>, _env: &mut Environment) -> RuntimeValue {
+    if args.len() != 1 {
+        panic!("Invalid number of arguments to 'floor' function")
+    }
+
+    if let RuntimeValue::Number(number) = args[0] {
+        RuntimeValue::Number(number.floor())
+    } else {
+        panic!("Invalid input to 'floor' expected number")
+    }
+}
+
+pub fn ceil(args: Vec<RuntimeValue>, _env: &mut Environment) -> RuntimeValue {
+    if args.len() != 1 {
+        panic!("Invalid number of arguments to 'ceil' function")
+    }
+
+    if let RuntimeValue::Number(number) = args[0] {
+        RuntimeValue::Number(number.ceil())
+    } else {
+        panic!("Invalid input to 'ceil' expected number")
+    }
+}

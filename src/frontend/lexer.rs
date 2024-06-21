@@ -106,7 +106,7 @@ pub fn tokenize(source_code: String) -> Result<Vec<Token>, String> {
             ':' => tokens.push(Token::Colon),
             ',' => tokens.push(Token::Comma),
             '.' => tokens.push(Token::Dot),
-            '+' | '*' | '/' => tokens.push(Token::BinaryOperator(c.to_string())),
+            '+' | '*' | '/' | '%' => tokens.push(Token::BinaryOperator(c.to_string())),
             '-' => {
                 if let Some(c2) = chars.peek() {
                     if c2.is_whitespace() {
@@ -143,10 +143,10 @@ pub fn tokenize(source_code: String) -> Result<Vec<Token>, String> {
             _ if c.is_numeric() => {
                 tokens.push(Token::Number(get_number_string(c, &mut chars)?))
             }
-            _ if c.is_alphabetic() => {
+            _ if c.is_alphabetic() || c == '_' => {
                 let mut id_string = c.to_string();
                 while let Some(&next) = chars.peek() {
-                    if next.is_alphabetic() {
+                    if next.is_alphabetic() || next == '_' {
                         chars.next();
                         id_string.push(next);
                     } else {

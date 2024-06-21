@@ -8,6 +8,7 @@ pub fn eval_numeric_binary_expr(left: f32, right: f32, operator: String) -> Resu
         "-" => Ok(RuntimeValue::Number(left - right)),
         "*" => Ok(RuntimeValue::Number(left * right)),
         "/" => Ok(RuntimeValue::Number(left / right)),
+        "%" => Ok(RuntimeValue::Number(left % right)),
         _ => Err(format!("Invalid operator: {:?}", operator))
     }
 }

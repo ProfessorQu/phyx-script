@@ -35,8 +35,11 @@ impl Environment {
         env.declare_var("print".to_string(), RuntimeValue::NativeFn(native_fns::print)).expect("'print' already declared");
         env.declare_var("rgb".to_string(), RuntimeValue::NativeFn(native_fns::rgb)).expect("'rgb' already declared");
         env.declare_var("hsv".to_string(), RuntimeValue::NativeFn(native_fns::hsv)).expect("'rgb' already declared");
+
         env.declare_var("range".to_string(), RuntimeValue::NativeFn(native_fns::range)).expect("'range' already declared");
         env.declare_var("random".to_string(), RuntimeValue::NativeFn(native_fns::random)).expect("'random' already declared");
+        env.declare_var("floor".to_string(), RuntimeValue::NativeFn(native_fns::floor)).expect("'floor' already declared");
+        env.declare_var("ceil".to_string(), RuntimeValue::NativeFn(native_fns::ceil)).expect("'ceil' already declared");
 
         env
     }
