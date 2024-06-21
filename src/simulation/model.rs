@@ -19,8 +19,7 @@ pub fn model(_app: &App) -> Model {
 
     let ast = parser.produce_ast(code).expect("Failed to generate ");
 
-    println!("AST: {:?}", ast);
-    println!("result: {:?}", evaluate(ast, &mut env).expect("Failed to evaluate"));
+     evaluate(ast, &mut env).expect("Failed to evaluate");
 
     let mut physics = Physics::new();
     let values = match env.lookup_var("objects".to_string()).expect("Failed to get objects") {

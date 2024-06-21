@@ -105,8 +105,8 @@ pub fn eval_call_expr(args: Vec<Statement>, caller: &Statement, env: &mut Enviro
 
     match evaluate(caller.clone(), env)? {
         RuntimeValue::NativeFn(func) => Ok(func(values, env)),
-        RuntimeValue::Function { name, parameters, body } => {
-            let declaration_env = env.resolve_mut(&name)?;
+        RuntimeValue::Function { name, parameters, body, declaration_env } => {
+            // let declaration_env = env.resolve_mut(&name)?;
             let mut scope = Environment::new(declaration_env.clone());
 
             let num_params = parameters.len();

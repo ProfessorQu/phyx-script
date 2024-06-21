@@ -12,7 +12,7 @@ pub enum RuntimeValue {
     Boolean(bool),
 
     NativeFn(fn(args: Vec<RuntimeValue>, env: &mut Environment) -> RuntimeValue),
-    Function{ name: String, parameters: Vec<String>, body: Vec<Statement> },
+    Function{ name: String, parameters: Vec<String>, body: Vec<Statement>, declaration_env: Environment },
     Range(i32, i32, usize),
 
     Object(HashMap<String, RuntimeValue>),
@@ -29,7 +29,7 @@ impl Display for RuntimeValue {
             RuntimeValue::Boolean(boolean) => write!(f, "{}", boolean),
 
             RuntimeValue::NativeFn(func) => write!(f, "native fn ({:?})", func),
-            RuntimeValue::Function { name, parameters, body: _, } => write!(f, "{}({:?})", name, parameters),
+            RuntimeValue::Function { name, parameters, body: _, declaration_env: _ } => write!(f, "{}({:?})", name, parameters),
             RuntimeValue::Range(start, stop, step) => write!(f, "range({}, {}, {})", start, stop, step),
 
             RuntimeValue::Object(map) => write!(f, "Object {{ {:?} }}", map),

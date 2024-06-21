@@ -1,13 +1,7 @@
-let gravity = 3;
-let bounciness = 1.6;
-
-for i in range(3) {
-    let c = circle {
+fn makeCircle() {
+    circle {
         gravity: 3
-    };
-    add(c)
+    }
 }
 
-add(ring {
-    size: 300
-})
+add(makeCircle())
