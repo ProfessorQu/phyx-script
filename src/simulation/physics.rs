@@ -45,7 +45,7 @@ impl Physics {
 
         let collider = match builder.shape {
             ShapeType::Circle => ColliderBuilder::ball(builder.size),
-            ShapeType::Square => ColliderBuilder::cuboid(builder.size / 2.0, builder.size / 2.0),
+            ShapeType::Square => ColliderBuilder::cuboid(builder.size, builder.size),
             ShapeType::Ring => {
                 let vertices: Vec<Point<Real>> = (0..=360).map(|i| {
                     let radian = deg_to_rad(i as f32);

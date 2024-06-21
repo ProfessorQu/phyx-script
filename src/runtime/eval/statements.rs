@@ -16,26 +16,45 @@ pub fn eval_var_declaration(identifier: String, value: &Statement, env: &mut Env
 }
 
 pub fn eval_function_declaration(name: String, parameters: Vec<String>, body: Vec<Statement>, env: &mut Environment) -> Result<RuntimeValue, String> {
-    let func = RuntimeValue::Function { name: name.clone(), parameters, body, declaration_env: env.clone() };
+    let func = RuntimeValue::Function { name: name.clone(), parameters, body };
 
     env.declare_var(name, func)
 }
 
 pub fn eval_for_loop(loop_var: String, range: &Statement, body: Vec<Statement>, env: &mut Environment) -> Result<RuntimeValue, String> {
-    let stop = match evaluate(range.clone(), env)? {
-        RuntimeValue::Range(stop) => stop,
+    let (start, stop, step) = match evaluate(range.clone(), env)? {
+        RuntimeValue::Range(start, stop, step) => (start, stop, step),
         _ => return Err("Expected a range".to_string())
     };
 
-    let mut scope = Environment::new(env.clone());
-    scope.declare_var(loop_var.clone(), RuntimeValue::Number(0.0))?;
-
     let mut result = RuntimeValue::Number(0.0);
 
-    for i in 0..stop {
-        scope.assign_var(loop_var.clone(), RuntimeValue::Number(i as f32))?;
+    for i in (start..stop).step_by(step) {
+        let mut scope = Environment::new(env.clone());
+        scope.declare_var(loop_var.clone(), RuntimeValue::Number(i as f32))?;
 
         for statement in body.clone() {
+            result = evaluate(statement, &mut scope)?;
+        }
+    }
+
+    Ok(result)
+}
+
+pub fn eval_if_statement(condition: &Statement, body: Vec<Statement>, else_body: Vec<Statement>, env: &mut Environment) -> Result<RuntimeValue, String> {
+    let boolean = match evaluate(condition.clone(), env)? {
+        RuntimeValue::Boolean(boolean) => boolean,
+        value => return Err(format!("Value '{}' is not a boolean", value))
+    };
+
+    let mut result = RuntimeValue::Number(0.0);
+    let mut scope = Environment::new(env.clone());
+    if boolean {
+        for statement in body.clone() {
+            result = evaluate(statement, &mut scope)?;
+        }
+    } else {
+        for statement in else_body.clone() {
             result = evaluate(statement, &mut scope)?;
         }
     }

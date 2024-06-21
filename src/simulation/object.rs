@@ -117,7 +117,10 @@ impl ObjectBuilder {
 
         Object {
             shape: self.shape,
-            size: self.size,
+            size: match self.shape {
+                ShapeType::Square => 2.0 * self.size,
+                _ => self.size
+            },
             stroke_weight: self.stroke_weight,
             color: self.color,
 

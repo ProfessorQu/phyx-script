@@ -44,12 +44,16 @@ pub enum Token {
     Colon,
     Dot,
 
+    Comparison(String),
+
     Eof,
 
     Let,
     Fn,
     For,
-    In
+    In,
+    If,
+    Else
 }
 
 static KEYWORDS: phf::Map<&'static str, Token> = phf_map! {
@@ -57,6 +61,8 @@ static KEYWORDS: phf::Map<&'static str, Token> = phf_map! {
     "fn" => Token::Fn,
     "for" => Token::For,
     "in" => Token::In,
+    "if" => Token::If,
+    "else" => Token::Else,
 
     "circle" => Token::Shape(ShapeType::Circle),
     "square" => Token::Shape(ShapeType::Square),
@@ -96,7 +102,6 @@ pub fn tokenize(source_code: String) -> Result<Vec<Token>, String> {
             ')' => tokens.push(Token::CloseParen),
             '{' => tokens.push(Token::OpenBracket),
             '}' => tokens.push(Token::CloseBracket),
-            '=' => tokens.push(Token::Equals),
             ';' => tokens.push(Token::Semicolon),
             ':' => tokens.push(Token::Colon),
             ',' => tokens.push(Token::Comma),
@@ -109,6 +114,30 @@ pub fn tokenize(source_code: String) -> Result<Vec<Token>, String> {
                     } else {
                         tokens.push(Token::UnaryOperator(c.to_string()));
                     }
+                }
+            }
+            '=' => {
+                if let Some('=') = chars.peek() {
+                    chars.next();
+                    tokens.push(Token::Comparison("==".to_string()))
+                } else {
+                    tokens.push(Token::Equals)
+                }
+            }
+            '>' => {
+                if let Some('=') = chars.peek() {
+                    chars.next();
+                    tokens.push(Token::Comparison(">=".to_string()))
+                } else {
+                    tokens.push(Token::Comparison(">".to_string()))
+                }
+            }
+            '<' => {
+                if let Some('=') = chars.peek() {
+                    chars.next();
+                    tokens.push(Token::Comparison("<=".to_string()))
+                } else {
+                    tokens.push(Token::Comparison("<".to_string()))
                 }
             }
             _ if c.is_numeric() => {

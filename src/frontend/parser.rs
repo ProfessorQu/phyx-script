@@ -51,6 +51,7 @@ impl Parser {
             Token::Let => self.parse_var_declaration(),
             Token::Fn => self.parse_function_declaration(),
             Token::For => self.parse_for_loop(),
+            Token::If => self.parse_if_statement(),
             _ => self.parse_expr()
         }
     }
@@ -121,13 +122,44 @@ impl Parser {
 
         Ok(Statement::ForLoop { loop_var, range: Box::new(range), body })
     }
+
+    fn parse_if_statement(&mut self) -> Result<Statement, String> {
+        self.eat();
+        self.expect(Token::OpenParen, "Expected parentheses before condition".to_string())?;
+
+        let condition = self.parse_expr()?;
+
+        self.expect(Token::CloseParen, "Expected parentheses after condition".to_string())?;
+        self.expect(Token::OpenBracket, "Expected open bracket before if block".to_string())?;
+
+        let mut body = vec![];
+        while self.at() != Token::CloseBracket && self.not_eof() {
+            body.push(self.parse_statement()?);
+        }
+
+        self.expect(Token::CloseBracket, "Expected close bracket after if block".to_string())?;
+
+        let mut else_body = vec![];
+        if self.at() == Token::Else {
+            self.eat();
+            self.expect(Token::OpenBracket, "Expected open bracket before else block".to_string())?;
+
+            while self.at() != Token::CloseBracket && self.not_eof() {
+                else_body.push(self.parse_statement()?);
+            }
+
+            self.expect(Token::CloseBracket, "Expected close bracket after else block".to_string())?;
+        }
+
+        Ok(Statement::If { condition: Box::new(condition), body, else_body })
+    }
     
     fn parse_expr(&mut self) -> Result<Statement, String> {
         self.parse_assignment_expr()
     }
 
     fn parse_assignment_expr(&mut self) -> Result<Statement, String> {
-        let left = self.parse_additive_expr()?;
+        let left = self.parse_comparison_expr()?;
 
         if self.at() == Token::Equals {
             self.eat();
@@ -139,6 +171,23 @@ impl Parser {
         } else {
             Ok(left)
         }
+    }
+
+    fn parse_comparison_expr(&mut self) -> Result<Statement, String> {
+        let mut left = self.parse_additive_expr()?;
+
+        while let Token::Comparison(operator) = self.at() {
+            self.eat();
+            let right = self.parse_multiplicative_expr()?;
+
+            left = Statement::Comparison {
+                left: Box::new(left),
+                right: Box::new(right),
+                operator
+            };
+        }
+
+        Ok(left)
     }
 
     fn parse_additive_expr(&mut self) -> Result<Statement, String> {
@@ -220,11 +269,11 @@ impl Parser {
     }
 
     fn parse_arguments_list(&mut self) -> Result<Vec<Statement>, String> {
-        let mut args = vec![self.parse_assignment_expr()?];
+        let mut args = vec![self.parse_statement()?];
 
         while self.at() == Token::Comma {
             self.eat();
-            args.push(self.parse_assignment_expr()?);
+            args.push(self.parse_statement()?);
         }
 
         Ok(args)
@@ -289,7 +338,7 @@ impl Parser {
                     map.insert(key.clone(), value);
 
                     if self.at() != Token::CloseBracket {
-                        self.expect(Token::Comma, format!("Forgot to close '{:?}' with a comma", key))?;
+                        self.expect(Token::Comma, format!("Forgot to close '{}' with a comma", key))?;
                     }
                 }
                 Token::Comma => {

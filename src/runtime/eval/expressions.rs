@@ -38,6 +38,29 @@ pub fn eval_unary_expr(value: &Statement, operator: String, env: &mut Environmen
     Err(format!("Invalid value: '{:?}'", value))
 }
 
+pub fn eval_comparison_expr(left: &Statement, right: &Statement, operator: String, env: &mut Environment) -> Result<RuntimeValue, String> {
+    let left_eval = evaluate(left.clone(), env)?;
+    let right_eval = evaluate(right.clone(), env)?;
+
+    let left_val = match left_eval {
+        RuntimeValue::Number(number) => number,
+        _ => return Err(format!("Invalid comparison expression: '{:?} {} {:?}", left, operator, right))
+    };
+    let right_val = match right_eval {
+        RuntimeValue::Number(number) => number,
+        _ => return Err(format!("Invalid comparison expression: '{:?} {} {:?}", left, operator, right))
+    };
+
+    match operator.as_str() {
+        "==" => Ok(RuntimeValue::Boolean(left_val == right_val)),
+        ">=" => Ok(RuntimeValue::Boolean(left_val >= right_val)),
+        "<=" => Ok(RuntimeValue::Boolean(left_val <= right_val)),
+        ">" => Ok(RuntimeValue::Boolean(left_val > right_val)),
+        "<" => Ok(RuntimeValue::Boolean(left_val < right_val)),
+        _ => Err(format!("Invalid operator: {:?}", operator))
+    }
+}
+
 pub fn eval_identifier(symbol: String, env: &mut Environment) -> Result<RuntimeValue, String> {
     env.lookup_var(symbol)
 }
@@ -75,24 +98,25 @@ pub fn eval_assignment(assignee: &Statement, value: &Statement, env: &mut Enviro
 }
 
 pub fn eval_call_expr(args: Vec<Statement>, caller: &Statement, env: &mut Environment) -> Result<RuntimeValue, String> {
-    let args: Vec<RuntimeValue> = args.iter().map(
-        |arg| evaluate(arg.clone(), env)
-                            .unwrap_or_else(|_| panic!("Failed to evaluate arg: '{:?}'", arg))
-    ).collect();
+    let mut values = vec![];
+    for arg in args {
+        values.push(evaluate(arg, env)?);
+    }
 
     match evaluate(caller.clone(), env)? {
-        RuntimeValue::NativeFn(func) => Ok(func(args, env)),
-        RuntimeValue::Function { name, parameters, body, declaration_env } => {
+        RuntimeValue::NativeFn(func) => Ok(func(values, env)),
+        RuntimeValue::Function { name, parameters, body } => {
+            let declaration_env = env.resolve_mut(&name)?;
             let mut scope = Environment::new(declaration_env.clone());
 
             let num_params = parameters.len();
-            if num_params != args.len() {
-                return Err(format!("The function '{}' takes {} arguments but {} were given", name, num_params, args.len()))
+            if num_params != values.len() {
+                return Err(format!("The function '{}' takes {} arguments but {} were given", name, num_params, values.len()))
             }
 
             for i in 0..num_params {
                 let varname = parameters[i].clone();
-                scope.declare_var(varname, args[i].clone())?;
+                scope.declare_var(varname, values[i].clone())?;
             }
 
             let mut result = RuntimeValue::Number(0.0);

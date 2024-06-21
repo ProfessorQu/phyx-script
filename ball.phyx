@@ -1,17 +1,13 @@
-fn create() {
-    for i in range(20) {
-        add(circle {
-            gravity: 3,
-            color: hsv(i * 18, 1, 1),
-            size: random(10, 20),
-            bounciness: random(0.9, 1.7)
-        })
-    }
+let gravity = 3;
+let bounciness = 1.6;
+
+for i in range(3) {
+    let c = circle {
+        gravity: 3
+    };
+    add(c)
 }
 
-add(create())
-
 add(ring {
-    size: 200,
-    fixed: true,
+    size: 300
 })
