@@ -9,7 +9,7 @@ use super::native_fns;
 
 #[derive(Debug, Clone)]
 pub struct Environment {
-    parent: Option<Box<Self>>,
+    pub parent: Option<Box<Self>>,
     variables: HashMap<String, RuntimeValue>
 }
 
@@ -35,7 +35,6 @@ impl Environment {
         env.declare_var("print".to_string(), RuntimeValue::NativeFn(native_fns::print)).expect("'print' already declared");
         env.declare_var("rgb".to_string(), RuntimeValue::NativeFn(native_fns::rgb)).expect("'rgb' already declared");
         env.declare_var("hsv".to_string(), RuntimeValue::NativeFn(native_fns::hsv)).expect("'rgb' already declared");
-        env.declare_var("add".to_string(), RuntimeValue::NativeFn(native_fns::add)).expect("'add' already declared");
         env.declare_var("range".to_string(), RuntimeValue::NativeFn(native_fns::range)).expect("'range' already declared");
         env.declare_var("random".to_string(), RuntimeValue::NativeFn(native_fns::random)).expect("'random' already declared");
 
@@ -78,7 +77,7 @@ impl Environment {
         } else if let Some(parent) = &self.parent {
             parent.resolve(varname)
         } else {
-            Err(format!("Failed to resolve variable '{:?}'", varname))
+            Err(format!("Failed to resolve variable '{}'", varname))
         }
     }
 
@@ -90,5 +89,9 @@ impl Environment {
         } else {
             Err(format!("Failed to resolve mutable variable '{:?}'", varname))
         }
+    }
+
+    pub fn get_variables(&self) -> HashMap<String, RuntimeValue> {
+        self.variables.clone()
     }
 }

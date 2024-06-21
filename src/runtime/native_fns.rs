@@ -65,17 +65,6 @@ pub fn hsv(args: Vec<RuntimeValue>, _env: &mut Environment) -> RuntimeValue {
     }
 }
 
-pub fn add(args: Vec<RuntimeValue>, env: &mut Environment) -> RuntimeValue {
-    let environment = env.resolve_mut(&"objects".to_string()).expect("Failed to resolve 'objects'");
-    let mut objects = match environment.lookup_var("objects".to_string()).expect("Failed to lookup 'objects'") {
-        RuntimeValue::Objects(objects) => objects,
-        other => panic!("Invalid runtime value for 'objects': {:?}", other)
-    };
-    objects.extend(args);
-
-    environment.assign_var("objects".to_string(), RuntimeValue::Objects(objects)).expect("Failed to assign 'objects'")
-}
-
 pub fn range(args: Vec<RuntimeValue>, _env: &mut Environment) -> RuntimeValue {
     match args.len() {
         1 => {

@@ -99,15 +99,14 @@ pub fn eval_assignment(assignee: &Statement, value: &Statement, env: &mut Enviro
 
 pub fn eval_call_expr(args: Vec<Statement>, caller: &Statement, env: &mut Environment) -> Result<RuntimeValue, String> {
     let mut values = vec![];
-    for arg in args {
+    for arg in args.clone() {
         values.push(evaluate(arg, env)?);
     }
 
     match evaluate(caller.clone(), env)? {
         RuntimeValue::NativeFn(func) => Ok(func(values, env)),
         RuntimeValue::Function { name, parameters, body, declaration_env } => {
-            // let declaration_env = env.resolve_mut(&name)?;
-            let mut scope = Environment::new(declaration_env.clone());
+            let mut scope = Environment::new(declaration_env);
 
             let num_params = parameters.len();
             if num_params != values.len() {
@@ -124,8 +123,35 @@ pub fn eval_call_expr(args: Vec<Statement>, caller: &Statement, env: &mut Enviro
             for statement in body {
                 result = evaluate(statement, &mut scope)?;
             }
-            
+
+            let mut top_env = scope.clone();
+            while let Some(env) = top_env.parent {
+                top_env = *env;
+            }
+
+            for (varname, value) in top_env.get_variables() {
+                match env.lookup_var(varname.clone()) {
+                    Ok(RuntimeValue::Objects(mut objects)) => {
+                        if let Ok(RuntimeValue::Objects(scope_objects)) = scope.lookup_var("objects".to_string()) {
+                            objects.extend(scope_objects);
+
+                            env.assign_var(varname, RuntimeValue::Objects(objects))?;
+                        }
+                    }
+                    Ok(_) => {
+                        env.assign_var(varname, value)?;
+                    }
+                    Err(_) => {
+                        env.declare_var(varname, value)?;
+                    }
+                }
+            }
+
             Ok(result)
+        }
+        RuntimeValue::Objects(mut objects) => {
+            objects.extend(values);
+            env.assign_var("objects".to_string(), RuntimeValue::Objects(objects))
         }
         runtimevalue => Err(format!("Cannot call value that is not a function: '{:?}'", runtimevalue))
     }
@@ -146,7 +172,8 @@ pub fn eval_member_expr(object: &Statement, property: &Statement, env: &mut Envi
         RuntimeValue::Object(map) => match map.get(property_name) {
             Some(value) => Ok(value.clone()),
             None => Err(format!("Object '{:?}' doesn't have property '{:?}'", object_name, property_name))
-        },
+        }
+        RuntimeValue::Objects(objects) => Ok(RuntimeValue::Objects(objects)),
         value => Err(format!("Invalid runtime value: '{:?}'", value))
     }
 }

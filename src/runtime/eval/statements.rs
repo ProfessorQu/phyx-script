@@ -36,6 +36,18 @@ pub fn eval_for_loop(loop_var: String, range: &Statement, body: Vec<Statement>, 
         for statement in body.clone() {
             result = evaluate(statement, &mut scope)?;
         }
+
+        let mut top_env = scope;
+        while let Some(env) = top_env.parent {
+            top_env = *env;
+        }
+
+        for (varname, value) in top_env.get_variables() {
+            match env.lookup_var(varname.clone()) {
+                Ok(_) => env.assign_var(varname, value)?,
+                Err(_) => env.declare_var(varname, value)?
+            };
+        }
     }
 
     Ok(result)
@@ -57,6 +69,18 @@ pub fn eval_if_statement(condition: &Statement, body: Vec<Statement>, else_body:
         for statement in else_body.clone() {
             result = evaluate(statement, &mut scope)?;
         }
+    }
+
+    let mut top_env = scope;
+    while let Some(env) = top_env.parent {
+        top_env = *env;
+    }
+
+    for (varname, value) in top_env.get_variables() {
+        match env.lookup_var(varname.clone()) {
+            Ok(_) => env.assign_var(varname, value)?,
+            Err(_) => env.declare_var(varname, value)?
+        };
     }
 
     Ok(result)
