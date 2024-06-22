@@ -1,7 +1,6 @@
 use std::{collections::HashMap, fmt::Debug};
 
 use nannou::color::*;
-use palette::named::from_str;
 
 use crate::{frontend::ShapeType, runtime::values::RuntimeValue};
 
@@ -27,7 +26,14 @@ impl Environment {
             variables: HashMap::new()
         };
 
+        for (name, color) in &super::colors::COLORS {
+            env.declare_var(name.to_string(), RuntimeValue::Color(Rgb::new(
+                color.red, color.green, color.green
+            ))).unwrap_or_else(|_| panic!("'{:?}' already declared", name));
+        }
+
         env.declare_var("objects".to_string(), RuntimeValue::Objects(vec![])).expect("'object' already declared");
+        env.declare_var("background_color".to_string(), RuntimeValue::Color(BLACK)).expect("'background_color' already declared");
 
         env.declare_var("true".to_string(), RuntimeValue::Boolean(true)).expect("'true' already declared");
         env.declare_var("false".to_string(), RuntimeValue::Boolean(false)).expect("'false' already declared");
@@ -65,14 +71,6 @@ impl Environment {
     }
 
     pub fn lookup_var(&self, varname: String) -> Result<RuntimeValue, String> {
-        if let Some(color) = from_str(varname.as_str()) {
-            return Ok(RuntimeValue::Color(Rgb::new(
-                color.red,
-                color.green,
-                color.blue
-            )))
-        }
-
         let env = self.resolve(&varname)?;
 
         Ok(env.variables.get(&varname).expect("'resolve' succeeded but varname is not present").clone())

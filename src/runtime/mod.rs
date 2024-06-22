@@ -1,3 +1,4 @@
+mod colors;
 mod eval;
 mod environment;
 mod interpreter;

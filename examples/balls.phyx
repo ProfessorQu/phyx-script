@@ -1,3 +1,5 @@
+background_color = whitesmoke
+
 let gravity = 3;
 let bounciness = 0.7;
 
@@ -6,8 +8,8 @@ let columns = 40;
 
 let size = 5;
 
-let x_offset = columns * size;
-let y_offset = rows * size;
+let x_offset = rows * size;
+let y_offset = columns * size;
 
 let num_circles = rows * columns;
 

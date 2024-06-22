@@ -104,7 +104,31 @@ pub fn tokenize(source_code: String) -> Result<Vec<Token>, String> {
             ':' => tokens.push(Token::Colon),
             ',' => tokens.push(Token::Comma),
             '.' => tokens.push(Token::Dot),
-            '+' | '*' | '/' | '%' => tokens.push(Token::BinaryOperator(c.to_string())),
+            '+' | '*' | '%' => tokens.push(Token::BinaryOperator(c.to_string())),
+            '/' => {
+                match chars.peek() {
+                    Some('/') =>  {
+                        for c2 in chars.by_ref() {
+                            if c2 == '\n' || c2 == '\r' {
+                                break
+                            }
+                        }
+                    }
+                    Some('*') => {
+                        let mut star_found = false;
+                        for c2 in chars.by_ref() {
+                            if c2 == '*' {
+                                star_found = true;
+                            } else if c2 == '/' && star_found {
+                                break
+                            } else {
+                                star_found = false;
+                            }
+                        }
+                    }
+                    _ => tokens.push(Token::BinaryOperator(c.to_string()))
+                }
+            }
             '-' => {
                 if let Some(c2) = chars.peek() {
                     if c2.is_whitespace() {

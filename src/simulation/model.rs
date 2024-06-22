@@ -8,7 +8,8 @@ use nannou::prelude::*;
 
 pub struct Model {
     physics: Physics,
-    objects: Vec<Object>
+    objects: Vec<Object>,
+    background_color: Rgb<u8>
 }
 
 pub fn model(_app: &App) -> Model {
@@ -37,7 +38,12 @@ pub fn model(_app: &App) -> Model {
     let mut objects = vec![];
     add_objects(&values, &mut objects, &mut physics);
 
-    Model { objects, physics }
+    let background_color = match env.lookup_var("background_color".to_string()).expect("Failed to look up background color") {
+        RuntimeValue::Color(color) => color,
+        value => panic!("Invalid value for background: {:?}", value)
+    };
+
+    Model { objects, physics, background_color }
 }
 
 fn add_objects(values: &Vec<RuntimeValue>, objects: &mut Vec<Object>, physics: &mut Physics) {
@@ -59,7 +65,7 @@ pub fn update(_app: &App, model: &mut Model, _update: Update) {
 pub fn view(app: &App, model: &Model, frame: Frame) {
     let draw = app.draw();
 
-    draw.background().color(BLACK);
+    draw.background().color(model.background_color);
 
     for object in &model.objects {
         object.draw(&draw, &model.physics);
