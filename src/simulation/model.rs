@@ -1,4 +1,4 @@
-use std::fs;
+use std::{cmp::Ordering, env, fs};
 
 use crate::{frontend::Parser, runtime::{evaluate, Environment, RuntimeValue}, simulation::ObjectBuilder};
 
@@ -12,13 +12,20 @@ pub struct Model {
 }
 
 pub fn model(_app: &App) -> Model {
-    let code = fs::read_to_string("ball.phyx").expect("Failed to read file");
-    let mut parser = Parser::new();
+    let args: Vec<String> = env::args().collect();
+    
+    match args.len().cmp(&2) {
+        Ordering::Less => panic!("Please input a file to run"),
+        Ordering::Greater => panic!("Too many arguments"),
+        Ordering::Equal => ()
+    }
 
+    let filename = &args[1];
+    let code = fs::read_to_string(filename).expect("Failed to read file");
+    let mut parser = Parser::new();
     let mut env = Environment::new_global();
 
     let ast = parser.produce_ast(code).expect("Failed to generate ");
-
     evaluate(ast, &mut env).expect("Failed to evaluate");
 
     let mut physics = Physics::new();

@@ -1,0 +1,34 @@
+let gravity = 3;
+let bounciness = 0.7;
+
+let rows = 40;
+let columns = 40;
+
+let size = 5;
+
+let x_offset = columns * size;
+let y_offset = rows * size;
+
+let num_circles = rows * columns;
+
+fn add_circle(i) {
+    let c = object {
+        gravity,
+        bounciness,
+        size,
+        color: hsv(i * (360 / num_circles), 1.0, 1.0),
+        x: (i % rows) * 2 * size - x_offset,
+        y: floor(i / rows) * 2 * size - y_offset,
+    };
+
+    objects.add(c)
+}
+
+for i in range(num_circles) {
+    add_circle(i)
+}
+
+objects.add(object {
+    shape: ring,
+    size: 300
+})

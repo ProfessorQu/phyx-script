@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use super::{ast::Statement, lexer::{tokenize, Token}, ShapeType};
+use super::{ast::Statement, lexer::{tokenize, Token}};
 
 pub struct Parser {
     tokens: Vec<Token>
@@ -111,7 +111,7 @@ impl Parser {
 
         let range = self.parse_statement()?;
 
-        self.expect(Token::OpenBracket, "Expected open bracket after function declaration".to_string())?;
+        self.expect(Token::OpenBracket, "Expected open bracket after for loop declaration".to_string())?;
 
         let mut body = vec![];
         while self.at() != Token::CloseBracket && self.not_eof() {
@@ -263,7 +263,7 @@ impl Parser {
             _ => self.parse_arguments_list()?
         };
 
-        self.expect(Token::CloseParen, "Missing closing parenthesis".to_string())?;
+        self.expect(Token::CloseParen, "Missing closing parenthesis on arguments".to_string())?;
 
         Ok(args)
     }
@@ -303,7 +303,7 @@ impl Parser {
         let token = self.eat();
 
         match token {
-            Token::Shape(shape) => Ok(self.parse_shape(shape)?),
+            Token::Object => Ok(self.parse_object()?),
             Token::Identifier(value) => Ok(Statement::Identifier(value)),
             Token::Number(number) => Ok(Statement::NumericLiteral(number.parse().expect("Failed to parse"))),
             Token::UnaryOperator(operator) => Ok(self.parse_unary_expr(operator)?),
@@ -319,11 +319,10 @@ impl Parser {
         }
     }
 
-    fn parse_shape(&mut self, shape: ShapeType) -> Result<Statement, String> {
-        self.expect(Token::OpenBracket, format!("The shape '{:?}' has to be opened with an open bracket", shape))?;
+    fn parse_object(&mut self) -> Result<Statement, String> {
+        self.expect(Token::OpenBracket, "The object has to be opened with an open bracket".to_string())?;
 
         let mut map = HashMap::new();
-        map.insert("shape".to_string(), Statement::Shape(shape));
 
         while self.at() != Token::CloseBracket {
             let key = match self.eat() {
@@ -353,7 +352,7 @@ impl Parser {
             }
         }
 
-        self.expect(Token::CloseBracket, format!("The shape {:?} wasn't closed with a close bracket", shape))?;
+        self.expect(Token::CloseBracket, "The object wasn't closed with a close bracket".to_string())?;
 
         Ok(Statement::Object(map))
     }

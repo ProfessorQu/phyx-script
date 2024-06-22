@@ -3,7 +3,7 @@ use std::{collections::HashMap, fmt::Debug};
 use nannou::color::*;
 use palette::named::from_str;
 
-use crate::runtime::values::RuntimeValue;
+use crate::{frontend::ShapeType, runtime::values::RuntimeValue};
 
 use super::native_fns;
 
@@ -31,6 +31,10 @@ impl Environment {
 
         env.declare_var("true".to_string(), RuntimeValue::Boolean(true)).expect("'true' already declared");
         env.declare_var("false".to_string(), RuntimeValue::Boolean(false)).expect("'false' already declared");
+
+        env.declare_var("circle".to_string(), RuntimeValue::Shape(ShapeType::Circle)).expect("'circle' already declared");
+        env.declare_var("rect".to_string(), RuntimeValue::Shape(ShapeType::Rect)).expect("'rect' already declared");
+        env.declare_var("ring".to_string(), RuntimeValue::Shape(ShapeType::Ring)).expect("'ring' already declared");
 
         env.declare_var("print".to_string(), RuntimeValue::NativeFn(native_fns::print)).expect("'print' already declared");
         env.declare_var("rgb".to_string(), RuntimeValue::NativeFn(native_fns::rgb)).expect("'rgb' already declared");

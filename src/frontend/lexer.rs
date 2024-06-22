@@ -5,7 +5,7 @@ use phf::phf_map;
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum ShapeType {
     Circle,
-    Square,
+    Rect,
     Ring
 }
 
@@ -15,7 +15,7 @@ impl TryFrom<String> for ShapeType {
     fn try_from(value: String) -> Result<Self, Self::Error> {
         match value.as_str() {
             "circle" => Ok(Self::Circle),
-            "square" => Ok(Self::Square),
+            "rect" => Ok(Self::Rect),
             "ring" => Ok(Self::Ring),
             _ => Err(format!("{:?} is not a valid shape", value))
         }
@@ -27,7 +27,7 @@ pub enum Token {
     Number(String),
     Identifier(String),
 
-    Shape(ShapeType),
+    Object,
     BinaryOperator(String),
     UnaryOperator(String),
 
@@ -64,9 +64,7 @@ static KEYWORDS: phf::Map<&'static str, Token> = phf_map! {
     "if" => Token::If,
     "else" => Token::Else,
 
-    "circle" => Token::Shape(ShapeType::Circle),
-    "square" => Token::Shape(ShapeType::Square),
-    "ring" => Token::Shape(ShapeType::Ring)
+    "object" => Token::Object
 };
 
 fn get_number_string(c: char, chars: &mut Peekable<std::str::Chars<'_>>) -> Result<String, String> {

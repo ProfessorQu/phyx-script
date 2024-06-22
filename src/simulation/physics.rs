@@ -44,12 +44,12 @@ impl Physics {
         }.ccd_enabled(true).linvel(builder.vel).gravity_scale(builder.gravity).position(builder.pos.into()).build();
 
         let collider = match builder.shape {
-            ShapeType::Circle => ColliderBuilder::ball(builder.size),
-            ShapeType::Square => ColliderBuilder::cuboid(builder.size, builder.size),
+            ShapeType::Circle => ColliderBuilder::ball(builder.width),
+            ShapeType::Rect => ColliderBuilder::cuboid(builder.width, builder.height),
             ShapeType::Ring => {
                 let vertices: Vec<Point<Real>> = (0..=360).map(|i| {
                     let radian = deg_to_rad(i as f32);
-                    point![radian.sin(), radian.cos()] * builder.size
+                    point![radian.sin(), radian.cos()] * builder.width
                 }).collect();
 
                 ColliderBuilder::polyline(vertices, None)

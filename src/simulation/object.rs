@@ -1,5 +1,7 @@
+use core::panic;
 use std::collections::HashMap;
 
+use nalgebra::SimdComplexField;
 use nannou::prelude::*;
 use rapier2d::prelude::*;
 use rand::Rng;
@@ -10,7 +12,8 @@ use super::physics::Physics;
 
 pub struct ObjectBuilder {
     pub shape: ShapeType,
-    pub size: f32,
+    pub width: f32,
+    pub height: f32,
     pub stroke_weight: f32,
     pub bounciness: f32,
     pub color: Rgb<u8>,
@@ -25,7 +28,8 @@ impl ObjectBuilder {
     pub fn new() -> Self {
         Self {
             shape: ShapeType::Circle,
-            size: 10.0,
+            width: 10.0,
+            height: 10.0,
             stroke_weight: 3.0,
             color: WHITE,
 
@@ -43,6 +47,8 @@ impl ObjectBuilder {
         for (key, value) in map {
             builder = match (key.as_str(), value.clone()) {
                 ("size", RuntimeValue::Number(number)) => builder.size(number),
+                ("width", RuntimeValue::Number(number)) => builder.width(number),
+                ("height", RuntimeValue::Number(number)) => builder.height(number),
                 ("gravity", RuntimeValue::Number(number)) => builder.gravity(number),
                 ("speed", RuntimeValue::Number(number)) => builder.speed(number),
                 ("stroke", RuntimeValue::Number(number)) => builder.stroke(number),
@@ -65,7 +71,18 @@ impl ObjectBuilder {
     }
 
     pub fn size(mut self, size: f32) -> ObjectBuilder {
-        self.size = size;
+        self.width = size;
+        self.height = size;
+        self
+    }
+
+    pub fn width(mut self, width: f32) -> ObjectBuilder {
+        self.width = width;
+        self
+    }
+
+    pub fn height(mut self, height: f32) -> ObjectBuilder {
+        self.height = height;
         self
     }
 
@@ -115,12 +132,14 @@ impl ObjectBuilder {
     pub fn build(self, physics: &mut Physics) -> Object {
         let handle = physics.add(&self);
 
+        if self.shape != ShapeType::Rect && self.width != self.height {
+            panic!("A circle and ring must have the same width and height")
+        }
+
         Object {
             shape: self.shape,
-            size: match self.shape {
-                ShapeType::Square => 2.0 * self.size,
-                _ => self.size
-            },
+            width: self.width,
+            height: self.height,
             stroke_weight: self.stroke_weight,
             color: self.color,
 
@@ -132,7 +151,8 @@ impl ObjectBuilder {
 #[derive(Debug, Clone)]
 pub struct Object {
     shape: ShapeType,
-    size: f32,
+    width: f32,
+    height: f32,
     stroke_weight: f32,
     color: Rgb<u8>,
 
@@ -148,17 +168,19 @@ impl Object {
 
                     draw.ellipse()
                         .x_y(pos.x, pos.y)
-                        .radius(self.size)
+                        .radius(self.width)
                         .color(self.color);
                 }
             }
-            ShapeType::Square => {
+            ShapeType::Rect => {
                 if let Some(rigidbody) = physics.bodies.get(self.handle) {
                     let pos = rigidbody.position().translation;
+                    let rot = rigidbody.rotation().simd_to_polar().1;
 
                     draw.rect()
                         .x_y(pos.x, pos.y)
-                        .w_h(self.size, self.size)
+                        .w_h(2.0 * self.width, 2.0 * self.height)
+                        .rotate(rot)
                         .color(self.color);
                 }
             }
@@ -169,8 +191,8 @@ impl Object {
                     let points = (0..=360).map(|i| {
                         let radian = deg_to_rad(i as f32);
 
-                        let x = pos.x + radian.sin() * self.size;
-                        let y = pos.y + radian.cos() * self.size;
+                        let x = pos.x + radian.sin() * self.width;
+                        let y = pos.y + radian.cos() * self.width;
 
                         (pt2(x, y), self.color)
                     });
