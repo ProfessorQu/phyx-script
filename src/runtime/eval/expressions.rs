@@ -29,14 +29,22 @@ pub fn eval_binary_expr(left: &Statement, right: &Statement, operator: String, e
 pub fn eval_unary_expr(value: &Statement, operator: String, env: &mut Environment) -> Result<RuntimeValue, String> {
     let value = evaluate(value.clone(), env)?;
 
-    if let RuntimeValue::Number(number) = value {
-        return match operator.as_str() {
-            "-" => Ok(RuntimeValue::Number(-number)),
-            op => Err(format!("Invalid unary operator: '{:?}'", op))
-        };
+    match value {
+        RuntimeValue::Number(number) => {
+            match operator.as_str() {
+                "-" => Ok(RuntimeValue::Number(-number)),
+                op => Err(format!("Invalid unary operator: '{:?}'", op))
+            }
+        }
+        RuntimeValue::Boolean(boolean) => {
+            match operator.as_str() {
+                "!" => Ok(RuntimeValue::Boolean(!boolean)),
+                op => Err(format!("Invalid unary operator: '{:?}'", op))
+            }
+        }
+        _ => Err(format!("Invalid value: '{:?}'", value))
     }
 
-    Err(format!("Invalid value: '{:?}'", value))
 }
 
 pub fn eval_comparison_expr(left: &Statement, right: &Statement, operator: String, env: &mut Environment) -> Result<RuntimeValue, String> {
@@ -45,7 +53,8 @@ pub fn eval_comparison_expr(left: &Statement, right: &Statement, operator: Strin
 
     match (left_eval.clone(), right_eval.clone()) {
         (RuntimeValue::Number(left_val), RuntimeValue::Number(right_val)) => eval_numeric_comparison_expr(left_val, right_val, operator),
-        (RuntimeValue::Boolean(left_val), RuntimeValue::Boolean(right_val)) => eval_boolean_comparison_expr(left_val, right_val, operator),
+        (RuntimeValue::Boolean(left_val), RuntimeValue::Boolean(right_val)) => eval_other_comparison_expr(left_val, right_val, operator),
+        (RuntimeValue::Color(left_val), RuntimeValue::Color(right_val)) => eval_other_comparison_expr(left_val, right_val, operator),
         _ => Err(format!("Invalid comparison: {:?} to {:?}", left_eval, right_eval))
     }
 }
@@ -53,6 +62,7 @@ pub fn eval_comparison_expr(left: &Statement, right: &Statement, operator: Strin
 fn eval_numeric_comparison_expr(left_val: f32, right_val: f32, operator: String) -> Result<RuntimeValue, String> {
     match operator.as_str() {
         "==" => Ok(RuntimeValue::Boolean(left_val == right_val)),
+        "!=" => Ok(RuntimeValue::Boolean(left_val != right_val)),
         ">=" => Ok(RuntimeValue::Boolean(left_val >= right_val)),
         "<=" => Ok(RuntimeValue::Boolean(left_val <= right_val)),
         ">" => Ok(RuntimeValue::Boolean(left_val > right_val)),
@@ -61,9 +71,11 @@ fn eval_numeric_comparison_expr(left_val: f32, right_val: f32, operator: String)
     }
 }
 
-fn eval_boolean_comparison_expr(left_val: bool, right_val: bool, operator: String) -> Result<RuntimeValue, String> {
+fn eval_other_comparison_expr<T>(left_val: T, right_val: T, operator: String) -> Result<RuntimeValue, String> 
+    where T: PartialEq {
     match operator.as_str() {
         "==" => Ok(RuntimeValue::Boolean(left_val == right_val)),
+        "!=" => Ok(RuntimeValue::Boolean(left_val != right_val)),
         _ => Err(format!("Invalid operator: {:?}", operator))
     }
 }
