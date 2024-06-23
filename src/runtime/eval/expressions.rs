@@ -43,21 +43,27 @@ pub fn eval_comparison_expr(left: &Statement, right: &Statement, operator: Strin
     let left_eval = evaluate(left.clone(), env)?;
     let right_eval = evaluate(right.clone(), env)?;
 
-    let left_val = match left_eval {
-        RuntimeValue::Number(number) => number,
-        _ => return Err(format!("Invalid comparison expression: '{:?} {} {:?}", left, operator, right))
-    };
-    let right_val = match right_eval {
-        RuntimeValue::Number(number) => number,
-        _ => return Err(format!("Invalid comparison expression: '{:?} {} {:?}", left, operator, right))
-    };
+    match (left_eval.clone(), right_eval.clone()) {
+        (RuntimeValue::Number(left_val), RuntimeValue::Number(right_val)) => eval_numeric_comparison_expr(left_val, right_val, operator),
+        (RuntimeValue::Boolean(left_val), RuntimeValue::Boolean(right_val)) => eval_boolean_comparison_expr(left_val, right_val, operator),
+        _ => Err(format!("Invalid comparison: {:?} to {:?}", left_eval, right_eval))
+    }
+}
 
+fn eval_numeric_comparison_expr(left_val: f32, right_val: f32, operator: String) -> Result<RuntimeValue, String> {
     match operator.as_str() {
         "==" => Ok(RuntimeValue::Boolean(left_val == right_val)),
         ">=" => Ok(RuntimeValue::Boolean(left_val >= right_val)),
         "<=" => Ok(RuntimeValue::Boolean(left_val <= right_val)),
         ">" => Ok(RuntimeValue::Boolean(left_val > right_val)),
         "<" => Ok(RuntimeValue::Boolean(left_val < right_val)),
+        _ => Err(format!("Invalid operator: {:?}", operator))
+    }
+}
+
+fn eval_boolean_comparison_expr(left_val: bool, right_val: bool, operator: String) -> Result<RuntimeValue, String> {
+    match operator.as_str() {
+        "==" => Ok(RuntimeValue::Boolean(left_val == right_val)),
         _ => Err(format!("Invalid operator: {:?}", operator))
     }
 }

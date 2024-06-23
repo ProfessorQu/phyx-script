@@ -65,10 +65,8 @@ impl Parser {
 
         self.expect(Token::Equals, "Variable isn't set with equals sign".to_string())?;
 
-        let value = self.parse_expr()?;
+        let value = self.parse_statement()?;
         let declaration = Statement::VarDeclaration { identifier, value: Box::new(value) };
-
-        self.expect(Token::Semicolon, "Variable declaration isn't stopped with a semicolon".to_string())?;
 
         Ok(declaration)
     }
@@ -163,7 +161,7 @@ impl Parser {
 
         if self.at() == Token::Equals {
             self.eat();
-            let value = self.parse_assignment_expr()?;
+            let value = self.parse_statement()?;
 
             let assignment = Statement::AssignmentExpr { assignee: Box::new(left), value: Box::new(value) };
 
@@ -178,7 +176,7 @@ impl Parser {
 
         while let Token::Comparison(operator) = self.at() {
             self.eat();
-            let right = self.parse_multiplicative_expr()?;
+            let right = self.parse_additive_expr()?;
 
             left = Statement::Comparison {
                 left: Box::new(left),
