@@ -105,15 +105,6 @@ pub fn tokenize(source_code: String) -> Result<Vec<Token>, String> {
             ',' => tokens.push(Token::Comma),
             '.' => tokens.push(Token::Dot),
             '+' | '*' | '%' => tokens.push(Token::BinaryOperator(c.to_string())),
-            '!' => {
-                match chars.peek() {
-                    Some('=') => {
-                        chars.next();
-                        tokens.push(Token::Comparison("!=".to_string()))
-                    },
-                    _ => tokens.push(Token::UnaryOperator("!".to_string()))
-                }
-            }
             '/' => {
                 match chars.peek() {
                     Some('/') =>  {
@@ -139,12 +130,18 @@ pub fn tokenize(source_code: String) -> Result<Vec<Token>, String> {
                 }
             }
             '-' => {
-                if let Some(c2) = chars.peek() {
-                    if c2.is_whitespace() {
-                        tokens.push(Token::BinaryOperator(c.to_string()));
-                    } else {
-                        tokens.push(Token::UnaryOperator(c.to_string()));
-                    }
+                match chars.peek() {
+                    Some(c2) if c2.is_whitespace() => tokens.push(Token::BinaryOperator(c.to_string())),
+                    _ => tokens.push(Token::UnaryOperator(c.to_string()))
+                }
+            }
+            '!' => {
+                match chars.peek() {
+                    Some('=') => {
+                        chars.next();
+                        tokens.push(Token::Comparison("!=".to_string()))
+                    },
+                    _ => tokens.push(Token::UnaryOperator("!".to_string()))
                 }
             }
             '=' => {
