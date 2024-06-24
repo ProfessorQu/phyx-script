@@ -27,10 +27,10 @@ pub fn model(_app: &App) -> Model {
     let mut env = Environment::new_global();
 
     let ast = parser.produce_ast(code);
-    evaluate(ast, &mut env).expect("Failed to evaluate");
+    evaluate(ast, &mut env);
 
     let mut physics = Physics::new();
-    let values = match env.lookup_var("objects".to_string()).expect("Failed to get objects") {
+    let values = match env.lookup_var("objects".to_string()) {
         RuntimeValue::Objects(objects) => objects,
         _ => panic!("Invalid 'objects'")
     };
@@ -38,7 +38,7 @@ pub fn model(_app: &App) -> Model {
     let mut objects = vec![];
     add_objects(&values, &mut objects, &mut physics);
 
-    let background_color = match env.lookup_var("background_color".to_string()).expect("Failed to look up background color") {
+    let background_color = match env.lookup_var("background_color".to_string()) {
         RuntimeValue::Color(color) => color,
         value => panic!("Invalid value for background: {:?}", value)
     };

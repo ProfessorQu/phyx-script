@@ -3,7 +3,7 @@ use crate::frontend::ast::Statement;
 use super::{environment::Environment, eval::{eval_assignment, eval_binary_expr, eval_call_expr, eval_comparison_expr, eval_for_loop, eval_function_declaration, eval_identifier, eval_if_statement, eval_member_expr, eval_object, eval_program, eval_shape, eval_unary_expr, eval_var_declaration}, values::RuntimeValue};
 
 
-pub fn evaluate(ast_node: Statement, env: &mut Environment) -> Result<RuntimeValue, String> {
+pub fn evaluate(ast_node: Statement, env: &mut Environment) -> RuntimeValue {
     match ast_node {
         Statement::Program { body } => eval_program(body, env),
         Statement::VarDeclaration { identifier, value } => eval_var_declaration(identifier, value.as_ref(), env),
@@ -12,7 +12,7 @@ pub fn evaluate(ast_node: Statement, env: &mut Environment) -> Result<RuntimeVal
         Statement::If { condition, body, else_body } => eval_if_statement(&condition, body, else_body, env),
 
         Statement::AssignmentExpr { assignee, value } => eval_assignment(&assignee, &value, env),
-        Statement::NumericLiteral(value) => Ok(RuntimeValue::Number(value)),
+        Statement::NumericLiteral(value) => RuntimeValue::Number(value),
         Statement::Identifier(symbol) => eval_identifier(symbol, env),
 
         Statement::BinaryExpr { left, right, operator } => eval_binary_expr(&left, &right, operator, env),
