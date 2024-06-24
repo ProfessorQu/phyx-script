@@ -38,12 +38,7 @@ pub fn eval_for_loop(loop_var: String, range: &Statement, body: Vec<Statement>, 
         }
 
         let parent = scope.parent.expect("The scoped environment doesn't have a parent");
-        for (varname, value) in parent.get_variables() {
-            match env.lookup_var(varname.clone()) {
-                Ok(_) => env.assign_var(varname, value)?,
-                Err(_) => env.declare_var(varname, value)?
-            };
-        }
+        env.merge(*parent);
     }
 
     Ok(result)
@@ -68,12 +63,7 @@ pub fn eval_if_statement(condition: &Statement, body: Vec<Statement>, else_body:
     }
 
     let parent = scope.parent.expect("The scoped environment doesn't have a parent");
-    for (varname, value) in parent.get_variables() {
-        match env.lookup_var(varname.clone()) {
-            Ok(_) => env.assign_var(varname, value)?,
-            Err(_) => env.declare_var(varname, value)?
-        };
-    }
+    env.merge(*parent);
 
     Ok(result)
 }

@@ -1,0 +1,9 @@
+objects.add(object {
+    shape: rect
+})
+
+for i in range(10) {
+    objects.add(object {
+        shape: circle
+    })
+}

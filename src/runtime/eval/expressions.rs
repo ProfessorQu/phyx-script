@@ -148,23 +148,8 @@ pub fn eval_call_expr(args: Vec<Statement>, caller: &Statement, env: &mut Enviro
                 top_env = *env;
             }
 
-            for (varname, value) in top_env.get_variables() {
-                match env.lookup_var(varname.clone()) {
-                    Ok(RuntimeValue::Objects(mut objects)) => {
-                        if let Ok(RuntimeValue::Objects(scope_objects)) = scope.lookup_var("objects".to_string()) {
-                            objects.extend(scope_objects);
+            env.merge_objects(top_env);
 
-                            env.assign_var(varname, RuntimeValue::Objects(objects))?;
-                        }
-                    }
-                    Ok(_) => {
-                        env.assign_var(varname, value)?;
-                    }
-                    Err(_) => {
-                        env.declare_var(varname, value)?;
-                    }
-                }
-            }
 
             Ok(result)
         }

@@ -99,4 +99,27 @@ impl Environment {
     pub fn get_variables(&self) -> HashMap<String, RuntimeValue> {
         self.variables.clone()
     }
+
+    pub fn merge(&mut self, other: Environment) {
+        for (varname, value) in other.get_variables() {
+            self.variables.insert(varname, value);
+        }
+    }
+
+    pub fn merge_objects(&mut self, other: Environment) {
+        for (varname, value) in other.get_variables() {
+            match self.lookup_var(varname.clone()) {
+                Ok(RuntimeValue::Objects(mut objects)) => {
+                    if let Ok(RuntimeValue::Objects(scope_objects)) = other.lookup_var("objects".to_string()) {
+                        objects.extend(scope_objects);
+
+                        self.assign_var(varname, RuntimeValue::Objects(objects)).unwrap();
+                    }
+                }
+                _ => {
+                    self.variables.insert(varname, value);
+                }
+            };
+        }
+    }
 }
