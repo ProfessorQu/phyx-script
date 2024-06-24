@@ -26,7 +26,7 @@ pub fn model(_app: &App) -> Model {
     let mut parser = Parser::new();
     let mut env = Environment::new_global();
 
-    let ast = parser.produce_ast(code).expect("Failed to generate ");
+    let ast = parser.produce_ast(code);
     evaluate(ast, &mut env).expect("Failed to evaluate");
 
     let mut physics = Physics::new();

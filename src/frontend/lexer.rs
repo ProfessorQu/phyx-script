@@ -67,7 +67,7 @@ static KEYWORDS: phf::Map<&'static str, Token> = phf_map! {
     "object" => Token::Object
 };
 
-fn get_number_string(c: char, chars: &mut Peekable<std::str::Chars<'_>>) -> Result<String, String> {
+fn get_number_string(c: char, chars: &mut Peekable<std::str::Chars<'_>>) -> String {
     let mut num_string = c.to_string();
     let mut decimal_in_string = false;
     while let Some(&next) = chars.peek() {
@@ -76,7 +76,7 @@ fn get_number_string(c: char, chars: &mut Peekable<std::str::Chars<'_>>) -> Resu
             num_string.push(next);
         } else if next == '.' {
             if decimal_in_string {
-                return Err("'.' already used in this number".to_string())
+                panic!("'.' already used in this number")
             }
 
             chars.next();
@@ -87,10 +87,10 @@ fn get_number_string(c: char, chars: &mut Peekable<std::str::Chars<'_>>) -> Resu
         }
     }
 
-    Ok(num_string)
+    num_string
 }
 
-pub fn tokenize(source_code: String) -> Result<Vec<Token>, String> {
+pub fn tokenize(source_code: String) -> Vec<Token> {
     let mut tokens = vec![];
     let mut chars = source_code.chars().peekable();
 
@@ -169,7 +169,7 @@ pub fn tokenize(source_code: String) -> Result<Vec<Token>, String> {
                 }
             }
             _ if c.is_numeric() => {
-                tokens.push(Token::Number(get_number_string(c, &mut chars)?))
+                tokens.push(Token::Number(get_number_string(c, &mut chars)))
             }
             _ if c.is_alphabetic() || c == '_' => {
                 let mut id_string = c.to_string();
@@ -189,10 +189,10 @@ pub fn tokenize(source_code: String) -> Result<Vec<Token>, String> {
                 }
             }
             _ if c.is_whitespace() => (),
-            _ => return Err(format!("Unknown token: {:?}", c))
+            _ => panic!("Unknown token: {:?}", c)
         }
     }
 
     tokens.push(Token::Eof);
-    Ok(tokens)
+    tokens
 }
