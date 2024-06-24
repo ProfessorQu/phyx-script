@@ -1,9 +1,16 @@
-objects.add(object {
-    shape: rect
-})
-
-for i in range(10) {
+for i in range(100) {
     objects.add(object {
-        shape: circle
+        shape: ring,
+        speed: 1,
+        size: i * 2,
+        bounciness: 0.9,
+        stroke: 1
     })
 }
+
+objects.add(object {
+    shape: ring,
+    fixed: true,
+    size: 200,
+    stroke: 1
+})

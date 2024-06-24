@@ -43,22 +43,36 @@ impl Physics {
             RigidBodyBuilder::dynamic()
         }.ccd_enabled(true).linvel(builder.vel).gravity_scale(builder.gravity).position(builder.pos.into()).build();
 
-        let collider = match builder.shape {
-            ShapeType::Circle => ColliderBuilder::ball(builder.width),
-            ShapeType::Rect => ColliderBuilder::cuboid(builder.width, builder.height),
-            ShapeType::Ring => {
-                let vertices: Vec<Point<Real>> = (0..=360).map(|i| {
-                    let radian = deg_to_rad(i as f32);
-                    point![radian.sin(), radian.cos()] * builder.width
-                }).collect();
-
-                ColliderBuilder::polyline(vertices, None)
-            }
-        }.restitution(builder.bounciness).build();
-
         let handle = self.bodies.insert(rigidbody);
-        self.colliders.insert_with_parent(collider, handle, &mut self.bodies);
-        
+
+        match builder.shape {
+            ShapeType::Circle => {
+                let collider = ColliderBuilder::ball(builder.width).restitution(builder.bounciness).build();
+
+                self.colliders.insert_with_parent(collider, handle, &mut self.bodies);
+
+            },
+            ShapeType::Rect => {
+                let collider = ColliderBuilder::cuboid(builder.width, builder.height).restitution(builder.bounciness).build();
+
+                self.colliders.insert_with_parent(collider, handle, &mut self.bodies);
+            },
+            ShapeType::Ring => {
+                let mut vertices = vec![];
+
+                for i in (0..=360).step_by(2) {
+                    let radian = deg_to_rad(i as f32);
+                    vertices.push(point![radian.sin(), radian.cos()] * builder.width);
+                }
+
+                for point in vertices {
+                    let collider = ColliderBuilder::ball(builder.stroke_weight / 2.0).position(point.into()).restitution(builder.bounciness).build();
+
+                    self.colliders.insert_with_parent(collider, handle, &mut self.bodies);
+                }
+            }
+        }
+
         handle
     }
 

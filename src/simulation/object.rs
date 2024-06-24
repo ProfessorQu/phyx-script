@@ -161,44 +161,39 @@ pub struct Object {
 
 impl Object {
     pub fn draw(&self, draw: &Draw, physics: &Physics) {
+        let rigidbody = match physics.bodies.get(self.handle) {
+            Some(rb) => rb,
+            None => panic!("Object doesn't have associated handle")
+        };
+        let pos = rigidbody.position().translation;
+
         match self.shape {
             ShapeType::Circle => {
-                if let Some(rigidbody) = physics.bodies.get(self.handle) {
-                    let pos = rigidbody.position().translation;
-
-                    draw.ellipse()
-                        .x_y(pos.x, pos.y)
-                        .radius(self.width)
-                        .color(self.color);
-                }
+                draw.ellipse()
+                    .x_y(pos.x, pos.y)
+                    .radius(self.width)
+                    .color(self.color);
             }
             ShapeType::Rect => {
-                if let Some(rigidbody) = physics.bodies.get(self.handle) {
-                    let pos = rigidbody.position().translation;
-                    let rot = rigidbody.rotation().simd_to_polar().1;
+                let rot = rigidbody.rotation().simd_to_polar().1;
 
-                    draw.rect()
-                        .x_y(pos.x, pos.y)
-                        .w_h(2.0 * self.width, 2.0 * self.height)
-                        .rotate(rot)
-                        .color(self.color);
-                }
+                draw.rect()
+                    .x_y(pos.x, pos.y)
+                    .w_h(2.0 * self.width, 2.0 * self.height)
+                    .rotate(rot)
+                    .color(self.color);
             }
             ShapeType::Ring => {
-                if let Some(rigidbody) = physics.bodies.get(self.handle) {
-                    let pos = rigidbody.position().translation;
+                let points = (0..=360).map(|i| {
+                    let radian = deg_to_rad(i as f32);
 
-                    let points = (0..=360).map(|i| {
-                        let radian = deg_to_rad(i as f32);
+                    let x = pos.x + radian.sin() * self.width;
+                    let y = pos.y + radian.cos() * self.width;
 
-                        let x = pos.x + radian.sin() * self.width;
-                        let y = pos.y + radian.cos() * self.width;
+                    (pt2(x, y), self.color)
+                });
 
-                        (pt2(x, y), self.color)
-                    });
-
-                    draw.polyline().stroke_weight(self.stroke_weight).points_colored(points);
-                }
+                draw.polyline().stroke_weight(self.stroke_weight).points_colored(points);
             }
         }
     }
