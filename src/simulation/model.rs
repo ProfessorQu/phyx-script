@@ -4,7 +4,7 @@ use crate::{frontend::Parser, runtime::{evaluate, Environment, RuntimeValue}, si
 
 use super::{physics::Physics, Object};
 
-use nannou::prelude::*;
+use nannou::{prelude::*, winit::window::Icon};
 
 pub struct Model {
     physics: Physics,
@@ -12,7 +12,7 @@ pub struct Model {
     background_color: Rgb<u8>
 }
 
-pub fn model(_app: &App) -> Model {
+pub fn model(app: &App) -> Model {
     let args: Vec<String> = env::args().collect();
     
     match args.len().cmp(&2) {
@@ -22,6 +22,19 @@ pub fn model(_app: &App) -> Model {
     }
 
     let filename = &args[1];
+
+    let decoder = png::Decoder::new(fs::File::open("assets/icon.png").unwrap());
+    let mut reader = decoder.read_info().expect("Failed to read info of icon");
+    let mut buf = vec![0; reader.output_buffer_size()];
+    let info = reader.next_frame(&mut buf).expect("Failed to read the next frame");
+    let bytes = &buf[..info.buffer_size()].to_vec();
+    let icon = Icon::from_rgba(bytes.clone(), 180, 180).expect("Failed to create icon");
+
+    app.main_window().set_window_icon(Some(icon));
+
+    let title = "Phyx - ".to_string() + filename.split('/').last().expect("Filename is empty");
+    app.main_window().set_title(title.as_str());
+
     let code = fs::read_to_string(filename).expect("Failed to read file");
     let mut parser = Parser::new();
     let mut env = Environment::new_global();
