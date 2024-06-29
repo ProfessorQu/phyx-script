@@ -21,7 +21,7 @@ pub fn model(app: &App) -> Model {
         Ordering::Equal => ()
     }
 
-    let filename = &args[1];
+    app.main_window().set_maximized(true);
 
     let decoder = png::Decoder::new(fs::File::open("assets/icon.png").unwrap());
     let mut reader = decoder.read_info().expect("Failed to read info of icon");
@@ -29,9 +29,9 @@ pub fn model(app: &App) -> Model {
     let info = reader.next_frame(&mut buf).expect("Failed to read the next frame");
     let bytes = &buf[..info.buffer_size()].to_vec();
     let icon = Icon::from_rgba(bytes.clone(), 180, 180).expect("Failed to create icon");
-
     app.main_window().set_window_icon(Some(icon));
 
+    let filename = &args[1];
     let title = "Phyx - ".to_string() + filename.split('/').last().expect("Filename is empty");
     app.main_window().set_title(title.as_str());
 

@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::{frontend::ast::Statement, runtime::{evaluate, Environment, RuntimeValue}};
 
 pub fn eval_program(body: Vec<Statement>, env: &mut Environment) -> RuntimeValue {
@@ -66,4 +68,13 @@ pub fn eval_if_statement(condition: &Statement, body: Vec<Statement>, else_body:
     env.merge(*parent);
 
     result
+}
+
+pub fn eval_object(map: HashMap<String, Statement>, env: &mut Environment) -> RuntimeValue {
+    let mut var_map = HashMap::new();
+    for (key, value) in map {
+        var_map.insert(key, evaluate(value, env));
+    }
+
+    RuntimeValue::Object(var_map)
 }

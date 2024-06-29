@@ -1,7 +1,5 @@
 use std::{collections::HashMap, fmt::Debug};
 
-use super::ShapeType;
-
 #[derive(Debug, Clone)]
 pub enum Statement {
     Program { body: Vec<Statement> },
@@ -21,6 +19,5 @@ pub enum Statement {
     Identifier(String),
     NumericLiteral(f32),
 
-    Shape(ShapeType),
     Object(HashMap<String, Statement>)
 }

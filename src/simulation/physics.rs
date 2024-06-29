@@ -50,7 +50,6 @@ impl Physics {
                 let collider = ColliderBuilder::ball(builder.width).restitution(builder.bounciness).build();
 
                 self.colliders.insert_with_parent(collider, handle, &mut self.bodies);
-
             },
             ShapeType::Rect => {
                 let collider = ColliderBuilder::cuboid(builder.width, builder.height).restitution(builder.bounciness).build();
