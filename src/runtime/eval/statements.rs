@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::{frontend::ast::Statement, runtime::{evaluate, Environment, RuntimeValue}};
+use crate::{frontend::ast::Statement, runtime::{evaluate, values::Function, Environment, RuntimeValue}};
 
 pub fn eval_program(body: Vec<Statement>, env: &mut Environment) -> RuntimeValue {
     let mut last_eval = RuntimeValue::Number(0.0);
@@ -18,7 +18,7 @@ pub fn eval_var_declaration(identifier: String, value: &Statement, env: &mut Env
 }
 
 pub fn eval_function_declaration(name: String, parameters: Vec<String>, body: Vec<Statement>, env: &mut Environment) -> RuntimeValue {
-    let func = RuntimeValue::Function { name: name.clone(), parameters, body, declaration_env: env.clone() };
+    let func = RuntimeValue::Function(Function::new(name.clone(), parameters, body, env.clone()));
 
     env.declare_var(name, func)
 }
@@ -32,7 +32,7 @@ pub fn eval_for_loop(loop_var: String, range: &Statement, body: Vec<Statement>, 
     let mut result = RuntimeValue::Number(0.0);
 
     for i in (start..stop).step_by(step) {
-        let mut scope = Environment::new(env.clone());
+        let mut scope = Environment::new(env.clone(), false);
         scope.declare_var(loop_var.clone(), RuntimeValue::Number(i as f32));
 
         for statement in body.clone() {
@@ -53,7 +53,7 @@ pub fn eval_if_statement(condition: &Statement, body: Vec<Statement>, else_body:
     };
 
     let mut result = RuntimeValue::Number(0.0);
-    let mut scope = Environment::new(env.clone());
+    let mut scope = Environment::new(env.clone(), false);
     if boolean {
         for statement in body.clone() {
             result = evaluate(statement, &mut scope);

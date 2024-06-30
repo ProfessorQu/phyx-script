@@ -1,11 +1,42 @@
-objects.add(object {
+fn update(self) {
+    if (self.frames > 600) {
+        if (self.shape == rect) {
+            self.shape = circle
+        } else {
+            self.shape = rect
+        }
+
+        self.frames = 0
+    } else {
+        self.frames = self.frames + 1
+    }
+}
+
+let c = object {
+    update,
     gravity: 3,
-    x: 1,
-    bounciness: 1.6
-})
+    bounciness: 1.5,
+    x: 100,
+    frames: 0
+}
+
+objects.add(c)
 
 objects.add(object {
     shape: ring,
     fixed: true,
-    size: 200
+    size: 300
 })
+
+// let x = 3
+
+// if (true) {
+//     x = 4
+//     if (true) {
+//         x = 5
+//     }
+
+//     print(x)
+// }
+
+// print(x)

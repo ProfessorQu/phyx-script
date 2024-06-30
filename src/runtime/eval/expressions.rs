@@ -1,6 +1,6 @@
 use std::borrow::Borrow;
 
-use crate::{frontend::ast::Statement, runtime::{evaluate, Environment, RuntimeValue}};
+use crate::{frontend::ast::Statement, runtime::{evaluate, values::Function, Environment, RuntimeValue}};
 
 pub fn eval_numeric_binary_expr(left: f32, right: f32, operator: String) -> RuntimeValue {
     match operator.as_str() {
@@ -55,6 +55,7 @@ pub fn eval_comparison_expr(left: &Statement, right: &Statement, operator: Strin
         (RuntimeValue::Number(left_val), RuntimeValue::Number(right_val)) => eval_numeric_comparison_expr(left_val, right_val, operator),
         (RuntimeValue::Boolean(left_val), RuntimeValue::Boolean(right_val)) => eval_other_comparison_expr(left_val, right_val, operator),
         (RuntimeValue::Color(left_val), RuntimeValue::Color(right_val)) => eval_other_comparison_expr(left_val, right_val, operator),
+        (RuntimeValue::Shape(left_val), RuntimeValue::Shape(right_val)) => eval_other_comparison_expr(left_val, right_val, operator),
         _ => panic!("Invalid comparison: {:?} to {:?}", left_eval, right_eval)
     }
 }
@@ -124,8 +125,8 @@ pub fn eval_call_expr(args: Vec<Statement>, caller: &Statement, env: &mut Enviro
 
     match evaluate(caller.clone(), env) {
         RuntimeValue::NativeFn(func) => func(values, env),
-        RuntimeValue::Function { name, parameters, body, declaration_env } => {
-            let mut scope = Environment::new(declaration_env);
+        RuntimeValue::Function(Function { name, parameters, body, declaration_env }) => {
+            let mut scope = Environment::new(declaration_env, true);
 
             let num_params = parameters.len();
             if num_params != values.len() {
@@ -150,7 +151,6 @@ pub fn eval_call_expr(args: Vec<Statement>, caller: &Statement, env: &mut Enviro
 
             env.merge_objects(top_env);
 
-
             result
         }
         RuntimeValue::Objects(mut objects) => {
@@ -159,6 +159,25 @@ pub fn eval_call_expr(args: Vec<Statement>, caller: &Statement, env: &mut Enviro
         }
         runtimevalue => panic!("Cannot call value that is not a function: '{:?}'", runtimevalue)
     }
+}
+
+pub fn eval_object_update_expr(object: RuntimeValue, func: &mut Function) -> RuntimeValue {
+    let mut scope = Environment::new(func.declaration_env.clone(), true);
+
+    scope.declare_var(func.parameters[0].clone(), object.clone());
+
+    for statement in func.body.clone() {
+        evaluate(statement, &mut scope);
+    }
+
+    let mut top_env = scope.clone();
+    while let Some(env) = top_env.parent {
+        top_env = *env;
+    }
+
+    func.declaration_env.merge(top_env);
+
+    scope.lookup_var(func.parameters[0].clone())
 }
 
 pub fn eval_member_expr(object: &Statement, property: &Statement, env: &mut Environment) -> RuntimeValue {

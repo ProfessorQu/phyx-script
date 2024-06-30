@@ -9,21 +9,24 @@ use super::native_fns;
 #[derive(Debug, Clone)]
 pub struct Environment {
     pub parent: Option<Box<Self>>,
-    variables: HashMap<String, RuntimeValue>
+    variables: HashMap<String, RuntimeValue>,
+    func_env: bool
 }
 
 impl Environment {
-    pub fn new(parent: Self) -> Self {
+    pub fn new(parent: Self, func_env: bool) -> Self {
         Self {
             parent: Some(Box::new(parent)),
-            variables: HashMap::new()
+            variables: HashMap::new(),
+            func_env
         }
     }
 
     pub fn new_global() -> Self {
         let mut env = Self {
             parent: None,
-            variables: HashMap::new()
+            variables: HashMap::new(),
+            func_env: false
         };
 
         for (name, color) in &super::colors::COLORS {
@@ -89,8 +92,10 @@ impl Environment {
     pub fn resolve_mut(&mut self, varname: &String) -> &mut Environment {
         if self.variables.contains_key(varname) {
             self
+        } else if self.func_env {
+            panic!("Can't resolve mutable variable '{}' because this is a function environment", varname)
         } else if let Some(parent) = &mut self.parent {
-            parent.resolve_mut(varname)
+                parent.resolve_mut(varname)
         } else {
             panic!("Failed to resolve mutable variable '{:?}'", varname)
         }
@@ -102,7 +107,16 @@ impl Environment {
 
     pub fn merge(&mut self, other: Environment) {
         for (varname, value) in other.get_variables() {
-            self.variables.insert(varname, value);
+            self.assign_var(varname, value);
+            // self.variables.insert(varname, value);
+        }
+
+        if other.func_env {
+            return
+        }
+
+        if let Some(parent) = other.parent {
+            self.merge(*parent);
         }
     }
 
@@ -117,9 +131,18 @@ impl Environment {
                     }
                 }
                 _ => {
-                    self.variables.insert(varname, value);
+                    self.assign_var(varname, value);
+                    // self.variables.insert(varname, value);
                 }
             };
+        }
+
+        if other.func_env {
+            return
+        }
+
+        if let Some(parent) = other.parent {
+            self.merge(*parent);
         }
     }
 }

@@ -37,13 +37,13 @@ pub fn model(app: &App) -> Model {
 
     let code = fs::read_to_string(filename).expect("Failed to read file");
     let mut parser = Parser::new();
-    let mut env = Environment::new_global();
+    let mut global_env = Environment::new_global();
 
     let ast = parser.produce_ast(code);
-    evaluate(ast, &mut env);
+    evaluate(ast, &mut global_env);
 
     let mut physics = Physics::new();
-    let values = match env.lookup_var("objects".to_string()) {
+    let values = match global_env.lookup_var("objects".to_string()) {
         RuntimeValue::Objects(objects) => objects,
         _ => panic!("Invalid 'objects'")
     };
@@ -51,7 +51,7 @@ pub fn model(app: &App) -> Model {
     let mut objects = vec![];
     add_objects(&values, &mut objects, &mut physics);
 
-    let background_color = match env.lookup_var("background_color".to_string()) {
+    let background_color = match global_env.lookup_var("background_color".to_string()) {
         RuntimeValue::Color(color) => color,
         value => panic!("Invalid value for background: {:?}", value)
     };
@@ -72,6 +72,10 @@ fn add_objects(values: &Vec<RuntimeValue>, objects: &mut Vec<Object>, physics: &
 }
 
 pub fn update(_app: &App, model: &mut Model, _update: Update) {
+    for object in &mut model.objects {
+        object.update(&mut model.physics);
+    }
+
     model.physics.step();
 }
 

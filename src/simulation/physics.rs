@@ -36,6 +36,37 @@ impl Physics {
         }
     }
 
+    pub fn remove_colliders(&mut self, handle: &ColliderHandle) {
+        self.colliders.remove(*handle, &mut self.island_manager, &mut self.bodies, true);
+    }
+
+    pub fn add_collider(&mut self, handle: RigidBodyHandle, shape: ShapeType, bounciness: f32, width: f32, height: f32, stroke_weight: f32) {
+        match shape {
+            ShapeType::Circle => {
+                let collider = ColliderBuilder::ball(width).restitution(bounciness).build();
+                self.colliders.insert_with_parent(collider, handle, &mut self.bodies);
+            },
+            ShapeType::Rect => {
+                let collider = ColliderBuilder::cuboid(width, height).restitution(bounciness).build();
+                self.colliders.insert_with_parent(collider, handle, &mut self.bodies);
+            },
+            ShapeType::Ring => {
+                let mut vertices = vec![];
+
+                for i in (0..=360).step_by(2) {
+                    let radian = deg_to_rad(i as f32);
+                    vertices.push(point![radian.sin(), radian.cos()] * width);
+                }
+
+                for point in vertices {
+                    let collider = ColliderBuilder::ball(stroke_weight / 2.0).position(point.into()).restitution(bounciness).build();
+
+                    self.colliders.insert_with_parent(collider, handle, &mut self.bodies);
+                }
+            }
+        }
+    }
+
     pub fn add(&mut self, builder: &ObjectBuilder) -> RigidBodyHandle {
         let rigidbody = if builder.fixed {
             RigidBodyBuilder::fixed()
@@ -45,32 +76,7 @@ impl Physics {
 
         let handle = self.bodies.insert(rigidbody);
 
-        match builder.shape {
-            ShapeType::Circle => {
-                let collider = ColliderBuilder::ball(builder.width).restitution(builder.bounciness).build();
-
-                self.colliders.insert_with_parent(collider, handle, &mut self.bodies);
-            },
-            ShapeType::Rect => {
-                let collider = ColliderBuilder::cuboid(builder.width, builder.height).restitution(builder.bounciness).build();
-
-                self.colliders.insert_with_parent(collider, handle, &mut self.bodies);
-            },
-            ShapeType::Ring => {
-                let mut vertices = vec![];
-
-                for i in (0..=360).step_by(2) {
-                    let radian = deg_to_rad(i as f32);
-                    vertices.push(point![radian.sin(), radian.cos()] * builder.width);
-                }
-
-                for point in vertices {
-                    let collider = ColliderBuilder::ball(builder.stroke_weight / 2.0).position(point.into()).restitution(builder.bounciness).build();
-
-                    self.colliders.insert_with_parent(collider, handle, &mut self.bodies);
-                }
-            }
-        }
+        self.add_collider(handle, builder.shape, builder.bounciness, builder.width, builder.height, builder.stroke_weight);
 
         handle
     }
