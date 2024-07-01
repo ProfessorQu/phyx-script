@@ -76,7 +76,15 @@ pub fn update(_app: &App, model: &mut Model, _update: Update) {
         object.update(&mut model.physics);
     }
 
-    model.physics.step();
+    let collisions = model.physics.step();
+
+    for (collider1, collider2) in collisions {
+        for object in &mut model.objects {
+            if object.test_collider(&model.physics, collider1) || object.test_collider(&model.physics, collider2) {
+                object.hit(&mut model.physics);
+            }
+        }
+    }
 }
 
 pub fn view(app: &App, model: &Model, frame: Frame) {

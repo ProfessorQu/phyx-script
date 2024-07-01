@@ -1,5 +1,5 @@
 fn update(self) {
-    if (self.frames > 600) {
+    if (self.frames > 360) {
         if (self.shape == rect) {
             self.shape = circle
         } else {
@@ -10,13 +10,21 @@ fn update(self) {
     } else {
         self.frames = self.frames + 1
     }
+
+    self.color = hsv(self.frames % 360, 1.0, 1.0)
+}
+
+fn hit(self) {
+    self.size = self.size + 1
 }
 
 let c = object {
     update,
+    hit,
+    size: 20,
     gravity: 3,
     bounciness: 1.5,
-    x: 100,
+    speed: 10,
     frames: 0
 }
 
@@ -27,16 +35,3 @@ objects.add(object {
     fixed: true,
     size: 300
 })
-
-// let x = 3
-
-// if (true) {
-//     x = 4
-//     if (true) {
-//         x = 5
-//     }
-
-//     print(x)
-// }
-
-// print(x)

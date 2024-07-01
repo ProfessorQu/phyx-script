@@ -95,7 +95,7 @@ impl Environment {
         } else if self.func_env {
             panic!("Can't resolve mutable variable '{}' because this is a function environment", varname)
         } else if let Some(parent) = &mut self.parent {
-                parent.resolve_mut(varname)
+            parent.resolve_mut(varname)
         } else {
             panic!("Failed to resolve mutable variable '{:?}'", varname)
         }
@@ -108,7 +108,6 @@ impl Environment {
     pub fn merge(&mut self, other: Environment) {
         for (varname, value) in other.get_variables() {
             self.assign_var(varname, value);
-            // self.variables.insert(varname, value);
         }
 
         if other.func_env {
@@ -132,7 +131,6 @@ impl Environment {
                 }
                 _ => {
                     self.assign_var(varname, value);
-                    // self.variables.insert(varname, value);
                 }
             };
         }

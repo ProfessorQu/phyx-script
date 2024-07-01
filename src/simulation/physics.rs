@@ -36,18 +36,26 @@ impl Physics {
         }
     }
 
-    pub fn remove_colliders(&mut self, handle: &ColliderHandle) {
-        self.colliders.remove(*handle, &mut self.island_manager, &mut self.bodies, true);
+    pub fn remove_colliders(&mut self, colliders: &[ColliderHandle]) {
+        for collider in colliders {
+            self.colliders.remove(*collider, &mut self.island_manager, &mut self.bodies, true);
+        }
     }
 
     pub fn add_collider(&mut self, handle: RigidBodyHandle, shape: ShapeType, bounciness: f32, width: f32, height: f32, stroke_weight: f32) {
         match shape {
             ShapeType::Circle => {
-                let collider = ColliderBuilder::ball(width).restitution(bounciness).build();
+                let collider = ColliderBuilder::ball(width)
+                    .restitution(bounciness)
+                    .active_events(ActiveEvents::all())
+                    .build();
                 self.colliders.insert_with_parent(collider, handle, &mut self.bodies);
             },
             ShapeType::Rect => {
-                let collider = ColliderBuilder::cuboid(width, height).restitution(bounciness).build();
+                let collider = ColliderBuilder::cuboid(width, height)
+                    .restitution(bounciness)
+                    .active_events(ActiveEvents::all())
+                    .build();
                 self.colliders.insert_with_parent(collider, handle, &mut self.bodies);
             },
             ShapeType::Ring => {
@@ -59,7 +67,11 @@ impl Physics {
                 }
 
                 for point in vertices {
-                    let collider = ColliderBuilder::ball(stroke_weight / 2.0).position(point.into()).restitution(bounciness).build();
+                    let collider = ColliderBuilder::ball(stroke_weight / 2.0)
+                        .position(point.into())
+                        .restitution(bounciness)
+                        .active_events(ActiveEvents::all())
+                        .build();
 
                     self.colliders.insert_with_parent(collider, handle, &mut self.bodies);
                 }
@@ -81,9 +93,12 @@ impl Physics {
         handle
     }
 
-    pub fn step(&mut self) {
+    pub fn step(&mut self) -> Vec<(ColliderHandle, ColliderHandle)> {
         let hooks = ();
-        let events = ();
+
+        let (collision_send, collision_recv) = crossbeam::channel::unbounded();
+        let (contact_force_send, _contact_force_recv) = crossbeam::channel::unbounded();
+        let event_handler = ChannelEventCollector::new(collision_send, contact_force_send);
 
         self.pipeline.step(
             &self.gravity,
@@ -98,7 +113,17 @@ impl Physics {
             &mut self.ccd_solver,
             None,
             &hooks,
-            &events
+            &event_handler
         );
+
+        let mut collisions = vec![];
+
+        while let Ok(collision_event) = collision_recv.try_recv() {
+            if collision_event.started() {
+                collisions.push((collision_event.collider1(), collision_event.collider2()));
+            }
+        }
+
+        collisions
     }
 }

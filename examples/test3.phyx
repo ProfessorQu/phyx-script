@@ -1,0 +1,14 @@
+fn hit(self) {
+    objects.add(object {})
+}
+
+objects.add(object {
+    hit,
+    gravity: 3,
+})
+
+objects.add(object {
+    shape: ring,
+    fixed: true,
+    size: 100
+})

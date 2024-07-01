@@ -24,6 +24,7 @@ pub struct ObjectBuilder {
     pub fixed: bool,
 
     pub update_fn: Option<Function>,
+    pub hit_fn: Option<Function>,
 
     pub others: HashMap<String, RuntimeValue>
 }
@@ -45,6 +46,7 @@ impl ObjectBuilder {
             fixed: false,
             
             update_fn: None,
+            hit_fn: None,
 
             others: HashMap::new()
         }
@@ -67,6 +69,7 @@ impl ObjectBuilder {
                 ("fixed", RuntimeValue::Boolean(boolean)) => builder.fixed(boolean),
                 ("shape", RuntimeValue::Shape(shape)) => builder.shape(shape),
                 ("update", RuntimeValue::Function(Function { name, parameters, body, declaration_env })) => builder.update(name, parameters, body, declaration_env),
+                ("hit", RuntimeValue::Function(Function { name, parameters, body, declaration_env })) => builder.hit(name, parameters, body, declaration_env),
                 (key, value) => builder.other(key.to_string(), value)
             }
         }
@@ -143,6 +146,11 @@ impl ObjectBuilder {
         self
     }
 
+    pub fn hit(mut self, name: String, parameters: Vec<String>, body: Vec<Statement>, declaration_env: Environment) -> ObjectBuilder {
+        self.hit_fn = Some(Function::new(name, parameters, body, declaration_env));
+        self
+    }
+
     pub fn other(mut self, key: String, value: RuntimeValue) -> ObjectBuilder {
         self.others.insert(key, value);
         self
@@ -166,6 +174,7 @@ impl ObjectBuilder {
             handle,
 
             update_fn: self.update_fn,
+            hit_fn: self.hit_fn,
 
             others: self.others
         }
@@ -184,6 +193,7 @@ pub struct Object {
     handle: RigidBodyHandle,
 
     update_fn: Option<Function>,
+    hit_fn: Option<Function>,
 
     others: HashMap<String, RuntimeValue>
 }
@@ -194,6 +204,23 @@ impl Object {
         let object = RuntimeValue::Object(object_map);
 
         let func = match &mut self.update_fn {
+            Some(func) => func,
+            None => return
+        };
+
+        let new_map = match eval_object_update_expr(object, func) {
+            RuntimeValue::Object(map) => map,
+            _ => panic!("Invalid object")
+        };
+
+        self.update_map(new_map, physics);
+    }
+
+    pub fn hit(&mut self, physics: &mut Physics) {
+        let object_map = self.to_map(physics);
+        let object = RuntimeValue::Object(object_map);
+
+        let func = match &mut self.hit_fn {
             Some(func) => func,
             None => return
         };
@@ -245,7 +272,10 @@ impl Object {
                 ("height", RuntimeValue::Number(number)) => self.height = number,
                 ("bounciness", RuntimeValue::Number(number)) => self.bounciness = number,
                 ("color", RuntimeValue::Color(color)) => self.color = color,
-                ("size", RuntimeValue::Number(number)) => self.width = number,
+                ("size", RuntimeValue::Number(number)) => {
+                    self.width = number;
+                    self.height = number;
+                },
                 ("gravity", RuntimeValue::Number(number)) => rigidbody.set_gravity_scale(number, wake_up),
                 ("stroke", RuntimeValue::Number(number)) => self.stroke_weight = number,
                 ("shape", RuntimeValue::Shape(shape)) => self.shape = shape,
@@ -265,12 +295,18 @@ impl Object {
 
     pub fn update_shape(&mut self, physics: &mut Physics) {
         let rigidbody = physics.bodies.get(self.handle).expect("Failed to get rigidbody").clone();
-        
-        for collider in rigidbody.colliders() {
-            physics.remove_colliders(collider);
-        }
 
+        physics.remove_colliders(rigidbody.colliders());
         physics.add_collider(self.handle, self.shape, self.bounciness, self.width, self.height, self.stroke_weight);
+    }
+
+    pub fn test_collider(&self, physics: &Physics, collider: ColliderHandle) -> bool {
+        let rigidbody = match physics.bodies.get(self.handle) {
+            Some(rb) => rb,
+            None => panic!("Object doesn't have associated handle")
+        };
+
+        rigidbody.colliders().contains(&collider)
     }
 
     pub fn draw(&self, draw: &Draw, physics: &Physics) {
