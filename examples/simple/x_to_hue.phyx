@@ -1,5 +1,6 @@
 fn update(self) {
     let hue = (self.x + 100) / 200 * 360
+    self.stroke_color = hsv(hue, 1, 0.7)
     self.color = hsv(hue, 1, 1)
 }
 
@@ -7,8 +8,8 @@ objects.add(object {
     gravity: 3,
     bounciness: 1.5,
     color: hsv(0, 1, 1),
-    stroke_weight: 10,
     update,
+    trail: 10
 })
 
 objects.add(object {

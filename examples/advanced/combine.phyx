@@ -12,6 +12,7 @@ fn update(self) {
     }
 
     self.color = hsv(self.frames % 360, 1.0, 1.0)
+    self.stroke_color = hsv(self.frames % 360, 1, 0.5)
 }
 
 fn hit(self) {

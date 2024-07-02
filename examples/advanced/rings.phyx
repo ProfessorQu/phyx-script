@@ -1,14 +1,13 @@
-let num_rings = 100
+let num_rings = 50
 let size_change = 200 / num_rings
-let color_change = 360 / num_rings
 
 for i in range(1, num_rings) {
     objects.add(object {
         shape: ring,
-        color: hsv(i * color_change, 0, i / num_rings),
+        color: hsv(0, 0, i / num_rings),
         gravity: 3,
         size: i * size_change,
-        bounciness: 0.8,
+        bounciness: 0.5,
         stroke: 1
     })
 }
@@ -18,5 +17,5 @@ objects.add(object {
     fixed: true,
     size: 200,
     bounciness: 0,
-    stroke: 5
+    stroke: 3
 })

@@ -1,0 +1,11 @@
+objects.add(object {
+    gravity: 3,
+    bounciness: 1.6,
+    trail: true
+})
+
+objects.add(object {
+    shape: ring,
+    fixed: true,
+    size: 100
+})

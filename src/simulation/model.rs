@@ -6,7 +6,11 @@ use super::{physics::Physics, Object};
 
 use nannou::{prelude::*, winit::window::Icon};
 
+static FPS: u128 = 60;
+static SECS_PER_FRAME: u128 = 1_000_000 / FPS;
+
 pub struct Model {
+    num_updates: u128,
     physics: Physics,
     objects: Vec<Object>,
     background_color: Rgb<u8>
@@ -14,7 +18,7 @@ pub struct Model {
 
 pub fn model(app: &App) -> Model {
     let args: Vec<String> = env::args().collect();
-    
+
     match args.len().cmp(&2) {
         Ordering::Less => panic!("Please input a file to run"),
         Ordering::Greater => panic!("Too many arguments"),
@@ -56,7 +60,12 @@ pub fn model(app: &App) -> Model {
         value => panic!("Invalid value for background: {:?}", value)
     };
 
-    Model { physics, objects, background_color }
+    Model {
+        num_updates: 0,
+        physics,
+        objects,
+        background_color
+    }
 }
 
 fn add_objects(values: &Vec<RuntimeValue>, objects: &mut Vec<Object>, physics: &mut Physics) {
@@ -71,9 +80,14 @@ fn add_objects(values: &Vec<RuntimeValue>, objects: &mut Vec<Object>, physics: &
     }
 }
 
-pub fn update(_app: &App, model: &mut Model, _update: Update) {
+pub fn update(app: &App, model: &mut Model, _update: Update) {
+    let elapsed_frames = app.duration.since_start.as_nanos() / SECS_PER_FRAME;
+    if elapsed_frames < model.num_updates {
+        return
+    }
+
     for object in &mut model.objects {
-        object.update(&mut model.physics);
+        object.update(&mut model.physics, model.num_updates);
     }
 
     let collisions = model.physics.step();
@@ -85,6 +99,8 @@ pub fn update(_app: &App, model: &mut Model, _update: Update) {
             }
         }
     }
+
+    model.num_updates += 1;
 }
 
 pub fn view(app: &App, model: &Model, frame: Frame) {

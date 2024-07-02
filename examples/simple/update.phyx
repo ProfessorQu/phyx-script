@@ -1,0 +1,19 @@
+fn update(self) {
+    self.hue = (self.hue + 1) % 360
+    self.color = hsv(self.hue, 1, 1)
+    self.stroke_color = hsv(self.hue, 1, 0.7)
+}
+
+objects.add(object {
+    update,
+    gravity: 3,
+    bounciness: 1.6,
+    trail: 10,
+    hue: 0
+})
+
+objects.add(object {
+    shape: ring,
+    fixed: true,
+    size: 100
+})

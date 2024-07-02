@@ -1,0 +1,22 @@
+let growth = 0.2
+
+fn update(self) {
+    if (self.size > 100) {
+        self.growth = -growth
+    }
+    if (self.size < 10) {
+        self.growth = growth
+    }
+
+    self.size = self.size + self.growth
+    self.x = self.x + self.growth
+}
+
+let grow = object {
+    color: green,
+    stroke_weight: 0,
+    update,
+    growth
+}
+
+objects.add(grow)

@@ -27,6 +27,8 @@ pub struct ObjectBuilder {
     pub stroke_color: Rgb<u8>,
     pub stroke_weight: f32,
 
+    pub frames_per_trail_obj: Option<u128>,
+
     pub update_fn: Option<Function>,
     pub hit_fn: Option<Function>,
 
@@ -51,6 +53,8 @@ impl ObjectBuilder {
             color: WHITE,
             stroke_color: WHITE,
             stroke_weight: 3.0,
+
+            frames_per_trail_obj: None,
             
             update_fn: None,
             hit_fn: None,
@@ -80,6 +84,8 @@ impl ObjectBuilder {
                 ("color", RuntimeValue::Color(color)) => builder.color(color),
                 ("stroke_color", RuntimeValue::Color(color)) => builder.stroke_color(color),
                 ("stroke_weight", RuntimeValue::Number(number)) => builder.stroke_weight(number),
+
+                ("trail", RuntimeValue::Number(number)) => builder.frames_per_trail_obj(number),
 
                 ("update", RuntimeValue::Function(Function { name, parameters, body, declaration_env })) => builder.update(name, parameters, body, declaration_env),
                 ("hit", RuntimeValue::Function(Function { name, parameters, body, declaration_env })) => builder.hit(name, parameters, body, declaration_env),
@@ -158,6 +164,11 @@ impl ObjectBuilder {
         self
     }
 
+    pub fn frames_per_trail_obj(mut self, frames_per_trail_obj: f32) -> ObjectBuilder {
+        self.frames_per_trail_obj = Some(frames_per_trail_obj as u128);
+        self
+    }
+
     pub fn update(mut self, name: String, parameters: Vec<String>, body: Vec<Statement>, declaration_env: Environment) -> ObjectBuilder {
         self.update_fn = Some(Function::new(name, parameters, body, declaration_env));
         self
@@ -186,9 +197,12 @@ impl ObjectBuilder {
             width: self.width,
             height: self.height,
 
-            stroke_weight: self.stroke_weight,
-            stroke_color: self.stroke_color,
             color: self.color,
+            stroke_color: self.stroke_color,
+            stroke_weight: self.stroke_weight,
+
+            frames_per_trail_obj: self.frames_per_trail_obj,
+            trail_objs: vec![],
 
             bounciness: self.bounciness,
 
@@ -215,6 +229,9 @@ pub struct Object {
     stroke_color: Rgb<u8>,
     stroke_weight: f32,
 
+    frames_per_trail_obj: Option<u128>,
+    trail_objs: Vec<(Translation<f32>, f32, Object)>,
+
     update_fn: Option<Function>,
     hit_fn: Option<Function>,
 
@@ -224,7 +241,7 @@ pub struct Object {
 }
 
 impl Object {
-    pub fn update(&mut self, physics: &mut Physics) {
+    pub fn update(&mut self, physics: &mut Physics, elapsed_frames: u128) {
         let object_map = self.to_map(physics);
         let object = RuntimeValue::Object(object_map);
 
@@ -239,6 +256,16 @@ impl Object {
         };
 
         self.update_map(new_map, physics);
+
+        if let Some(frames_req) = self.frames_per_trail_obj {
+            if elapsed_frames / frames_req > self.trail_objs.len() as u128 {
+                let (pos, rot) = self.get_pos_and_rot(physics);
+                let mut obj_clone = self.clone();
+                obj_clone.trail_objs = vec![];
+
+                self.trail_objs.push((pos, rot, obj_clone));
+            }
+        }
     }
 
     pub fn hit(&mut self, physics: &mut Physics) {
@@ -345,12 +372,15 @@ impl Object {
     }
 
     pub fn draw(&self, draw: &Draw, physics: &Physics) {
-        let rigidbody = match physics.bodies.get(self.handle) {
-            Some(rb) => rb,
-            None => panic!("Object doesn't have associated handle")
-        };
-        let pos = rigidbody.position().translation;
+        for (pos, rot, obj) in &self.trail_objs {
+            obj.draw_obj(draw, *pos, *rot);
+        }
 
+        let (pos, rot) = self.get_pos_and_rot(physics);
+        self.draw_obj(draw, pos, rot);
+    }
+
+    fn draw_obj(&self, draw: &Draw, pos: Translation<f32>, rot: f32) {
         match self.shape {
             ShapeType::Circle => {
                 draw.ellipse()
@@ -361,8 +391,6 @@ impl Object {
                     .stroke_weight(self.stroke_weight);
             }
             ShapeType::Rect => {
-                let rot = rigidbody.rotation().simd_to_polar().1;
-
                 draw.rect()
                     .x_y(pos.x, pos.y)
                     .w_h(2.0 * self.width, 2.0 * self.height)
@@ -386,5 +414,16 @@ impl Object {
                     .points_colored(points);
             }
         }
+    }
+
+    fn get_pos_and_rot(&self, physics: &Physics) -> (Translation<f32>, f32) {
+        let rigidbody = match physics.bodies.get(self.handle) {
+            Some(rb) => rb,
+            None => panic!("Object doesn't have associated handle")
+        };
+        let pos = rigidbody.position().translation;
+        let rot = rigidbody.rotation().simd_to_polar().1;
+
+        (pos, rot)
     }
 }
