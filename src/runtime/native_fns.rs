@@ -6,7 +6,7 @@ use super::{Environment, RuntimeValue};
 
 pub fn print(args: Vec<RuntimeValue>, _env: &mut Environment) -> RuntimeValue {
     let joined: String = args.iter().fold(String::new(), |mut output, arg| {
-        let _ = write!(output, "{} ", arg);
+        write!(output, "{} ", arg).expect("Failed to write to output");
         output
     });
 

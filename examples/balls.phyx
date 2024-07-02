@@ -15,7 +15,7 @@ let y_offset = columns * size
 
 let num_circles = rows * columns
 
-fn add_circle(i) {
+for i in range(num_circles) {
     let shape = if (random() < 0.5) {
         rect
     } else {
@@ -27,16 +27,13 @@ fn add_circle(i) {
         gravity,
         bounciness,
         size,
+        stroke_color: hsv(i * (360 / num_circles), 1.0, 0.5),
         color: hsv(i * (360 / num_circles), 1.0, 1.0),
         x: (i % rows) * 2 * size - x_offset,
         y: floor(i / rows) * 2 * size - y_offset,
     }
 
     objects.add(c)
-}
-
-for i in range(num_circles) {
-    add_circle(i)
 }
 
 objects.add(object {

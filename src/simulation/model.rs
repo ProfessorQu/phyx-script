@@ -56,7 +56,7 @@ pub fn model(app: &App) -> Model {
         value => panic!("Invalid value for background: {:?}", value)
     };
 
-    Model { objects, physics, background_color }
+    Model { physics, objects, background_color }
 }
 
 fn add_objects(values: &Vec<RuntimeValue>, objects: &mut Vec<Object>, physics: &mut Physics) {

@@ -18,7 +18,7 @@ fn hit(self) {
     self.size = self.size + 1
 }
 
-let c = object {
+objects.add(object {
     update,
     hit,
     size: 20,
@@ -26,9 +26,7 @@ let c = object {
     bounciness: 1.5,
     speed: 10,
     frames: 0
-}
-
-objects.add(c)
+})
 
 objects.add(object {
     shape: ring,

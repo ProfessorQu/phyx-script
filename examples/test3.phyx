@@ -1,14 +1,18 @@
-fn hit(self) {
-    objects.add(object {})
+fn update(self) {
+    let hue = (self.x + 100) / 200 * 360
+    self.color = hsv(hue, 1, 1)
 }
 
 objects.add(object {
-    hit,
     gravity: 3,
+    bounciness: 1.5,
+    color: hsv(0, 1, 1),
+    stroke_weight: 10,
+    update,
 })
 
 objects.add(object {
     shape: ring,
-    fixed: true,
-    size: 100
+    size: 100,
+    fixed: true
 })

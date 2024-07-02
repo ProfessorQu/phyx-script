@@ -12,16 +12,20 @@ use super::physics::Physics;
 
 pub struct ObjectBuilder {
     pub shape: ShapeType,
-    pub width: f32,
-    pub height: f32,
-    pub stroke_weight: f32,
-    pub bounciness: f32,
-    pub color: Rgb<u8>,
 
     pub pos: Vector<Real>,
     pub vel: Vector<Real>,
+
+    pub width: f32,
+    pub height: f32,
+
     pub gravity: f32,
+    pub bounciness: f32,
     pub fixed: bool,
+
+    pub color: Rgb<u8>,
+    pub stroke_color: Rgb<u8>,
+    pub stroke_weight: f32,
 
     pub update_fn: Option<Function>,
     pub hit_fn: Option<Function>,
@@ -33,17 +37,20 @@ impl ObjectBuilder {
     pub fn new() -> Self {
         Self {
             shape: ShapeType::Circle,
-            width: 10.0,
-            height: 10.0,
-            stroke_weight: 3.0,
-            color: WHITE,
-
-            bounciness: 0.5,
 
             pos: vector![0.0, 0.0],
             vel: vector![0.0, 0.0],
+
+            width: 10.0,
+            height: 10.0,
+
             gravity: 0.0,
+            bounciness: 0.5,
             fixed: false,
+
+            color: WHITE,
+            stroke_color: WHITE,
+            stroke_weight: 3.0,
             
             update_fn: None,
             hit_fn: None,
@@ -56,20 +63,27 @@ impl ObjectBuilder {
         let mut builder = ObjectBuilder::new();
         for (key, value) in map {
             builder = match (key.as_str(), value) {
-                ("size", RuntimeValue::Number(number)) => builder.size(number),
-                ("width", RuntimeValue::Number(number)) => builder.width(number),
-                ("height", RuntimeValue::Number(number)) => builder.height(number),
-                ("gravity", RuntimeValue::Number(number)) => builder.gravity(number),
-                ("speed", RuntimeValue::Number(number)) => builder.speed(number),
-                ("stroke", RuntimeValue::Number(number)) => builder.stroke(number),
+                ("shape", RuntimeValue::Shape(shape)) => builder.shape(shape),
+
                 ("x", RuntimeValue::Number(number)) => builder.x(number),
                 ("y", RuntimeValue::Number(number)) => builder.y(number),
+                ("speed", RuntimeValue::Number(number)) => builder.speed(number),
+
+                ("width", RuntimeValue::Number(number)) => builder.width(number),
+                ("height", RuntimeValue::Number(number)) => builder.height(number),
+                ("size", RuntimeValue::Number(number)) => builder.size(number),
+
+                ("gravity", RuntimeValue::Number(number)) => builder.gravity(number),
                 ("bounciness", RuntimeValue::Number(number)) => builder.bounciness(number),
-                ("color", RuntimeValue::Color(color)) => builder.color(color),
                 ("fixed", RuntimeValue::Boolean(boolean)) => builder.fixed(boolean),
-                ("shape", RuntimeValue::Shape(shape)) => builder.shape(shape),
+
+                ("color", RuntimeValue::Color(color)) => builder.color(color),
+                ("stroke_color", RuntimeValue::Color(color)) => builder.stroke_color(color),
+                ("stroke_weight", RuntimeValue::Number(number)) => builder.stroke_weight(number),
+
                 ("update", RuntimeValue::Function(Function { name, parameters, body, declaration_env })) => builder.update(name, parameters, body, declaration_env),
                 ("hit", RuntimeValue::Function(Function { name, parameters, body, declaration_env })) => builder.hit(name, parameters, body, declaration_env),
+
                 (key, value) => builder.other(key.to_string(), value)
             }
         }
@@ -79,32 +93,6 @@ impl ObjectBuilder {
 
     pub fn shape(mut self, shape: ShapeType) -> ObjectBuilder {
         self.shape = shape;
-        self
-    }
-
-    pub fn size(mut self, size: f32) -> ObjectBuilder {
-        self.width = size;
-        self.height = size;
-        self
-    }
-
-    pub fn width(mut self, width: f32) -> ObjectBuilder {
-        self.width = width;
-        self
-    }
-
-    pub fn height(mut self, height: f32) -> ObjectBuilder {
-        self.height = height;
-        self
-    }
-
-    pub fn color(mut self, color: Rgb<u8>) -> ObjectBuilder {
-        self.color = color;
-        self
-    }
-
-    pub fn stroke(mut self, stroke_weight: f32) -> ObjectBuilder {
-        self.stroke_weight = stroke_weight;
         self
     }
 
@@ -126,6 +114,20 @@ impl ObjectBuilder {
         self
     }
 
+    pub fn width(mut self, width: f32) -> ObjectBuilder {
+        self.width = width;
+        self
+    }
+
+    pub fn height(mut self, height: f32) -> ObjectBuilder {
+        self.height = height;
+        self
+    }
+
+    pub fn size(self, size: f32) -> ObjectBuilder {
+        self.width(size).height(size)
+    }
+
     pub fn gravity(mut self, gravity: f32) -> ObjectBuilder {
         self.gravity = gravity;
         self
@@ -138,6 +140,21 @@ impl ObjectBuilder {
 
     pub fn fixed(mut self, fixed: bool) -> ObjectBuilder {
         self.fixed = fixed;
+        self
+    }
+
+    pub fn color(mut self, color: Rgb<u8>) -> ObjectBuilder {
+        self.color = color;
+        self
+    }
+
+    pub fn stroke_color(mut self, stroke_color: Rgb<u8>) -> ObjectBuilder {
+        self.stroke_color = stroke_color;
+        self
+    }
+
+    pub fn stroke_weight(mut self, stroke_weight: f32) -> ObjectBuilder {
+        self.stroke_weight = stroke_weight;
         self
     }
 
@@ -165,16 +182,20 @@ impl ObjectBuilder {
 
         Object {
             shape: self.shape,
+
             width: self.width,
             height: self.height,
-            bounciness: self.bounciness,
+
             stroke_weight: self.stroke_weight,
+            stroke_color: self.stroke_color,
             color: self.color,
 
-            handle,
+            bounciness: self.bounciness,
 
             update_fn: self.update_fn,
             hit_fn: self.hit_fn,
+
+            handle,
 
             others: self.others
         }
@@ -184,16 +205,20 @@ impl ObjectBuilder {
 #[derive(Debug, Clone)]
 pub struct Object {
     shape: ShapeType,
+
     width: f32,
     height: f32,
-    bounciness: f32,
-    stroke_weight: f32,
-    color: Rgb<u8>,
 
-    handle: RigidBodyHandle,
+    bounciness: f32,
+
+    color: Rgb<u8>,
+    stroke_color: Rgb<u8>,
+    stroke_weight: f32,
 
     update_fn: Option<Function>,
     hit_fn: Option<Function>,
+
+    handle: RigidBodyHandle,
 
     others: HashMap<String, RuntimeValue>
 }
@@ -240,16 +265,21 @@ impl Object {
         let pos = rigidbody.position().translation;
         let gravity = rigidbody.gravity_scale();
 
+        map.insert("shape".to_string(), RuntimeValue::Shape(self.shape));
+
         map.insert("x".to_string(), RuntimeValue::Number(pos.x));
         map.insert("y".to_string(), RuntimeValue::Number(pos.y));
+
         map.insert("width".to_string(), RuntimeValue::Number(self.width));
         map.insert("height".to_string(), RuntimeValue::Number(self.height));
-        map.insert("bounciness".to_string(), RuntimeValue::Number(self.bounciness));
-        map.insert("color".to_string(), RuntimeValue::Color(self.color));
         map.insert("size".to_string(), RuntimeValue::Number(self.width));
+
         map.insert("gravity".to_string(), RuntimeValue::Number(gravity));
-        map.insert("stroke".to_string(), RuntimeValue::Number(self.stroke_weight));
-        map.insert("shape".to_string(), RuntimeValue::Shape(self.shape));
+        map.insert("bounciness".to_string(), RuntimeValue::Number(self.bounciness));
+
+        map.insert("color".to_string(), RuntimeValue::Color(self.color));
+        map.insert("stroke_color".to_string(), RuntimeValue::Color(self.stroke_color));
+        map.insert("stroke_weight".to_string(), RuntimeValue::Number(self.stroke_weight));
 
         for (key, value) in self.others.clone() {
             map.insert(key, value);
@@ -266,19 +296,24 @@ impl Object {
 
         for (key, value) in new_map {
             match (key.as_str(), value) {
+                ("shape", RuntimeValue::Shape(shape)) => self.shape = shape,
+
                 ("x", RuntimeValue::Number(number)) => pos.translation.x = number,
                 ("y", RuntimeValue::Number(number)) => pos.translation.y = number,
+
                 ("width", RuntimeValue::Number(number)) => self.width = number,
                 ("height", RuntimeValue::Number(number)) => self.height = number,
-                ("bounciness", RuntimeValue::Number(number)) => self.bounciness = number,
-                ("color", RuntimeValue::Color(color)) => self.color = color,
                 ("size", RuntimeValue::Number(number)) => {
                     self.width = number;
                     self.height = number;
                 },
+
                 ("gravity", RuntimeValue::Number(number)) => rigidbody.set_gravity_scale(number, wake_up),
-                ("stroke", RuntimeValue::Number(number)) => self.stroke_weight = number,
-                ("shape", RuntimeValue::Shape(shape)) => self.shape = shape,
+                ("bounciness", RuntimeValue::Number(number)) => self.bounciness = number,
+
+                ("color", RuntimeValue::Color(color)) => self.color = color,
+                ("stroke_color", RuntimeValue::Color(color)) => self.stroke_color = color,
+                ("stroke_weight", RuntimeValue::Number(number)) => self.stroke_weight = number,
                 (key, value) => {
                     if self.others.contains_key(key) {
                         self.others.insert(key.to_string(), value);
@@ -321,7 +356,9 @@ impl Object {
                 draw.ellipse()
                     .x_y(pos.x, pos.y)
                     .radius(self.width)
-                    .color(self.color);
+                    .color(self.color)
+                    .stroke_color(self.stroke_color)
+                    .stroke_weight(self.stroke_weight);
             }
             ShapeType::Rect => {
                 let rot = rigidbody.rotation().simd_to_polar().1;
@@ -330,7 +367,9 @@ impl Object {
                     .x_y(pos.x, pos.y)
                     .w_h(2.0 * self.width, 2.0 * self.height)
                     .rotate(rot)
-                    .color(self.color);
+                    .color(self.color)
+                    .stroke_color(self.stroke_color)
+                    .stroke_weight(self.stroke_weight);
             }
             ShapeType::Ring => {
                 let points = (0..=360).map(|i| {
@@ -342,7 +381,9 @@ impl Object {
                     (pt2(x, y), self.color)
                 });
 
-                draw.polyline().stroke_weight(self.stroke_weight).points_colored(points);
+                draw.polyline()
+                    .stroke_weight(self.stroke_weight)
+                    .points_colored(points);
             }
         }
     }
