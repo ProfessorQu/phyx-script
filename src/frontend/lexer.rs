@@ -54,7 +54,8 @@ pub enum Token {
     For,
     In,
     If,
-    Else
+    Else,
+    While
 }
 
 static KEYWORDS: phf::Map<&'static str, Token> = phf_map! {
@@ -64,6 +65,7 @@ static KEYWORDS: phf::Map<&'static str, Token> = phf_map! {
     "in" => Token::In,
     "if" => Token::If,
     "else" => Token::Else,
+    "while" => Token::While,
 
     "object" => Token::Object
 };

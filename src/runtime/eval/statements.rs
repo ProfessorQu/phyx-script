@@ -70,6 +70,32 @@ pub fn eval_if_statement(condition: &Statement, body: Vec<Statement>, else_body:
     result
 }
 
+pub fn eval_while_statement(condition: &Statement, body: Vec<Statement>, env: &mut Environment) -> RuntimeValue {
+    let mut boolean = match evaluate(condition.clone(), env) {
+        RuntimeValue::Boolean(boolean) => boolean,
+        value => panic!("Value '{}' is not a boolean", value)
+    };
+
+    let mut result = RuntimeValue::Number(0.0);
+    while boolean {
+        let mut scope = Environment::new(env.clone(), false);
+
+        for statement in body.clone() {
+            result = evaluate(statement, &mut scope);
+        }
+
+        let parent = scope.parent.expect("The scoped environment doesn't have a parent");
+        env.merge(*parent);
+
+        boolean = match evaluate(condition.clone(), env) {
+            RuntimeValue::Boolean(boolean) => boolean,
+            value => panic!("Value '{}' is not a boolean", value)
+        };
+    }
+
+    result
+}
+
 pub fn eval_object(map: HashMap<String, Statement>, env: &mut Environment) -> RuntimeValue {
     let mut var_map = HashMap::new();
     for (key, value) in map {

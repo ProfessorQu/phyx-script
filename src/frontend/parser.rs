@@ -52,6 +52,7 @@ impl Parser {
             Token::Fn => self.parse_function_declaration(),
             Token::For => self.parse_for_loop(),
             Token::If => self.parse_if_statement(),
+            Token::While => self.parse_while_statement(),
             _ => self.parse_expr()
         }
     }
@@ -149,6 +150,37 @@ impl Parser {
         }
 
         Statement::If { condition: Box::new(condition), body, else_body }
+    }
+
+    fn parse_while_statement(&mut self) -> Statement {
+        self.eat();
+        self.expect(Token::OpenParen, "Expected parentheses before condition".to_string());
+
+        let condition = self.parse_expr();
+
+        self.expect(Token::CloseParen, "Expected parentheses after condition".to_string());
+        self.expect(Token::OpenBracket, "Expected open bracket before if block".to_string());
+
+        let mut body = vec![];
+        while self.at() != Token::CloseBracket && self.not_eof() {
+            body.push(self.parse_statement());
+        }
+
+        self.expect(Token::CloseBracket, "Expected close bracket after if block".to_string());
+
+        let mut else_body = vec![];
+        if self.at() == Token::Else {
+            self.eat();
+            self.expect(Token::OpenBracket, "Expected open bracket before else block".to_string());
+
+            while self.at() != Token::CloseBracket && self.not_eof() {
+                else_body.push(self.parse_statement());
+            }
+
+            self.expect(Token::CloseBracket, "Expected close bracket after else block".to_string());
+        }
+
+        Statement::While { condition: Box::new(condition), body }
     }
     
     fn parse_expr(&mut self) -> Statement {
