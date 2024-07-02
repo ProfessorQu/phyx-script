@@ -26,6 +26,23 @@ pub fn eval_binary_expr(left: &Statement, right: &Statement, operator: String, e
     panic!("Invalid binary expression: '{:?} {} {:?}", left, operator, right)
 }
 
+pub fn eval_boolean_expr(left: &Statement, right: &Statement, operator: String, env: &mut Environment) -> RuntimeValue {
+    let left_eval = evaluate(left.clone(), env);
+    let right_eval = evaluate(right.clone(), env);
+
+    if let RuntimeValue::Boolean(left_value) = left_eval {
+        if let RuntimeValue::Boolean(right_value) = right_eval {
+            return match operator.as_str() {
+                "||" => RuntimeValue::Boolean(left_value || right_value),
+                "&&" => RuntimeValue::Boolean(left_value && right_value),
+                operator => panic!("Invalid operator: {}", operator)
+            }
+        }
+    }
+
+    panic!("Invalid binary expression: '{:?} {} {:?}", left, operator, right)
+}
+
 pub fn eval_unary_expr(value: &Statement, operator: String, env: &mut Environment) -> RuntimeValue {
     let value = evaluate(value.clone(), env);
 

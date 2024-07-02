@@ -13,6 +13,7 @@ pub enum Statement {
     CallExpr { args: Vec<Statement>, caller: Box<Statement> },
 
     BinaryExpr { left: Box<Statement>, right: Box<Statement>, operator: String },
+    BooleanExpr { left: Box<Statement>, right: Box<Statement>, operator: String },
     UnaryExpr { value: Box<Statement>, operator: String },
     Comparison { left: Box<Statement>, right: Box<Statement>, operator: String },
 

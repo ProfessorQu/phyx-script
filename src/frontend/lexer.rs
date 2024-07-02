@@ -29,6 +29,7 @@ pub enum Token {
 
     Object,
     BinaryOperator(String),
+    BooleanOperator(String),
     UnaryOperator(String),
 
     Equals,
@@ -105,6 +106,24 @@ pub fn tokenize(source_code: String) -> Vec<Token> {
             ',' => tokens.push(Token::Comma),
             '.' => tokens.push(Token::Dot),
             '+' | '*' | '%' => tokens.push(Token::BinaryOperator(c.to_string())),
+            '|' => {
+                match chars.peek() {
+                    Some('|') => {
+                        chars.next();
+                        tokens.push(Token::BooleanOperator("||".to_string()));
+                    }
+                    c2 => panic!("Expected '|' after '|' got '{:?}'", c2)
+                }
+            }
+            '&' => {
+                match chars.peek() {
+                    Some('&') => {
+                        chars.next();
+                        tokens.push(Token::BooleanOperator("&&".to_string()));
+                    }
+                    c2 => panic!("Expected '&' after '&' got '{:?}'", c2)
+                }
+            }
             '/' => {
                 match chars.peek() {
                     Some('/') =>  {

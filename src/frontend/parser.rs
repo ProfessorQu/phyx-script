@@ -169,17 +169,35 @@ impl Parser {
     }
 
     fn parse_comparison_expr(&mut self) -> Statement {
-        let mut left = self.parse_additive_expr();
+        let mut left = self.parse_boolean_expr();
 
         while let Token::Comparison(operator) = self.at() {
             self.eat();
-            let right = self.parse_additive_expr();
+            let right = self.parse_boolean_expr();
 
             left = Statement::Comparison {
                 left: Box::new(left),
                 right: Box::new(right),
                 operator
             };
+        }
+
+        left
+    }
+
+    fn parse_boolean_expr(&mut self) -> Statement {
+        let mut left = self.parse_additive_expr();
+
+        while let Token::BooleanOperator(operator) = self.at() {
+            self.eat();
+
+            let right = self.parse_additive_expr();
+
+            left = Statement::BooleanExpr {
+                left: Box::new(left),
+                right: Box::new(right),
+                operator
+            }
         }
 
         left
