@@ -145,10 +145,9 @@ pub fn floor(args: Vec<RuntimeValue>, _env: &mut Environment) -> RuntimeValue {
         panic!("Invalid number of arguments to 'floor' function")
     }
 
-    if let RuntimeValue::Number(number) = args[0] {
-        RuntimeValue::Number(number.floor())
-    } else {
-        panic!("Invalid input to 'floor' expected number")
+    match &args[0] {
+        RuntimeValue::Number(number) => RuntimeValue::Number(number.floor()),
+        arg => panic!("Invalid argument to 'floor': {}", arg)
     }
 }
 
@@ -157,9 +156,48 @@ pub fn ceil(args: Vec<RuntimeValue>, _env: &mut Environment) -> RuntimeValue {
         panic!("Invalid number of arguments to 'ceil' function")
     }
 
-    if let RuntimeValue::Number(number) = args[0] {
-        RuntimeValue::Number(number.ceil())
-    } else {
-        panic!("Invalid input to 'ceil' expected number")
+    match &args[0] {
+        RuntimeValue::Number(number) => RuntimeValue::Number(number.ceil()),
+        arg => panic!("Invalid argument to 'ceil': {}", arg)
+    }
+}
+
+pub fn abs(args: Vec<RuntimeValue>, _env: &mut Environment) -> RuntimeValue {
+    if args.len() != 1 {
+        panic!("Invalid number of arguments to 'abs' function")
+    }
+
+    match &args[0] {
+        RuntimeValue::Number(number) => RuntimeValue::Number(number.abs()),
+        arg => panic!("Invalid argument to 'abs': {}", arg)
+    }
+}
+
+pub fn pow(args: Vec<RuntimeValue>, _env: &mut Environment) -> RuntimeValue {
+    if args.len() != 2 {
+        panic!("Invalid number of arguments to 'pow' function")
+    }
+
+    let base = match &args[0] {
+        RuntimeValue::Number(number) => number,
+        arg => panic!("Invalid argument to 'abs': {}", arg)
+    };
+
+    let exponent = match &args[1] {
+        RuntimeValue::Number(number) => number,
+        arg => panic!("Invalid argument to 'abs': {}", arg)
+    };
+
+    RuntimeValue::Number(base.powf(*exponent))
+}
+
+pub fn sqrt(args: Vec<RuntimeValue>, _env: &mut Environment) -> RuntimeValue {
+    if args.len() != 1 {
+        panic!("Invalid number of arguments to 'abs' function")
+    }
+
+    match &args[0] {
+        RuntimeValue::Number(number) => RuntimeValue::Number(number.sqrt()),
+        arg => panic!("Invalid argument to 'abs': {}", arg)
     }
 }

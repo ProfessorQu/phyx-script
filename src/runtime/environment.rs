@@ -54,6 +54,10 @@ impl Environment {
         env.declare_var("floor".to_string(), RuntimeValue::NativeFn(native_fns::floor));
         env.declare_var("ceil".to_string(), RuntimeValue::NativeFn(native_fns::ceil));
 
+        env.declare_var("abs".to_string(), RuntimeValue::NativeFn(native_fns::abs));
+        env.declare_var("pow".to_string(), RuntimeValue::NativeFn(native_fns::pow));
+        env.declare_var("sqrt".to_string(), RuntimeValue::NativeFn(native_fns::sqrt));
+
         env
     }
 
