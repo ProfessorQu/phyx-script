@@ -8,8 +8,8 @@ fn update(self) {
         self.growth = growth
     }
 
-    self.size = self.size + self.growth
-    self.x = self.x + self.growth
+    self.size += self.growth
+    self.x += self.growth
 }
 
 let grow = object {

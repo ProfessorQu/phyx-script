@@ -43,6 +43,10 @@ impl Physics {
     }
 
     pub fn add_collider(&mut self, handle: RigidBodyHandle, shape: ShapeType, bounciness: f32, width: f32, height: f32, stroke_weight: f32) {
+        let half_stroke = stroke_weight / 2.0;
+        let width = width + half_stroke;
+        let height = height + half_stroke;
+
         match shape {
             ShapeType::Circle => {
                 let collider = ColliderBuilder::ball(width)

@@ -27,12 +27,12 @@ pub enum Token {
     Number(String),
     Identifier(String),
 
-    Object,
     BinaryOperator(String),
     BooleanOperator(String),
     UnaryOperator(String),
 
     Equals,
+    CompoundEquals(String),
 
     OpenParen,
     CloseParen,
@@ -55,7 +55,9 @@ pub enum Token {
     In,
     If,
     Else,
-    While
+    While,
+
+    Object
 }
 
 static KEYWORDS: phf::Map<&'static str, Token> = phf_map! {
@@ -107,7 +109,24 @@ pub fn tokenize(source_code: String) -> Vec<Token> {
             ':' => tokens.push(Token::Colon),
             ',' => tokens.push(Token::Comma),
             '.' => tokens.push(Token::Dot),
-            '+' | '*' | '%' => tokens.push(Token::BinaryOperator(c.to_string())),
+            '+' | '*' | '%' => {
+                if let Some('=') = chars.peek() {
+                    chars.next();
+                    tokens.push(Token::CompoundEquals(c.to_string()))
+                } else {
+                    tokens.push(Token::BinaryOperator(c.to_string()))
+                }
+            }
+            '-' => {
+                match chars.peek() {
+                    Some(c2) if c2.is_whitespace() => tokens.push(Token::BinaryOperator(c.to_string())),
+                    Some('=') => {
+                        chars.next();
+                        tokens.push(Token::CompoundEquals(c.to_string()))
+                    }
+                    _ => tokens.push(Token::UnaryOperator(c.to_string()))
+                }
+            }
             '|' => {
                 match chars.peek() {
                     Some('|') => {
@@ -148,12 +167,6 @@ pub fn tokenize(source_code: String) -> Vec<Token> {
                         }
                     }
                     _ => tokens.push(Token::BinaryOperator(c.to_string()))
-                }
-            }
-            '-' => {
-                match chars.peek() {
-                    Some(c2) if c2.is_whitespace() => tokens.push(Token::BinaryOperator(c.to_string())),
-                    _ => tokens.push(Token::UnaryOperator(c.to_string()))
                 }
             }
             '!' => {

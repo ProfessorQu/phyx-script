@@ -1,0 +1,49 @@
+let size = 5
+let stroke_weight = 3
+let padding = 0
+let bound = size + padding
+
+let width = 20
+let height = 20
+let total_objs = width * height
+
+let x_offset = bound * width + stroke_weight * width / 2
+let y_offset = bound * height + stroke_weight * height / 2
+
+let gravity = 3
+
+for x in range(width) {
+    for y in range(height) {
+        let hue = ((x * height) + y) / total_objs * 360
+        objects.add(object {
+            x: x * (2 * bound + stroke_weight) - x_offset,
+            y: y * (2 * bound + stroke_weight) - y_offset,
+            color: hsv(hue, 1, 1),
+            stroke_color: hsv(hue, 1, 0.7),
+            stroke_weight,
+            gravity,
+            size
+        })
+    }
+}
+
+let ground_height = 50
+
+objects.add(object {
+    shape: rect,
+    fixed: true,
+    height: ground_height,
+    width: 500,
+    y: -(y_offset + 2 * ground_height),
+    stroke_weight: 20,
+    stroke_color: gray
+})
+
+objects.add(object {
+    shape: rect,
+    size: 100,
+    y: 1000,
+    gravity: 10,
+    stroke_weight: 10,
+    stroke_color: grey
+})

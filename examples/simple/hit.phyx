@@ -5,7 +5,7 @@ fn update(self) {
 }
 
 fn hit(self) {
-    self.size = self.size + 1
+    self.size += 1
 }
 
 objects.add(object {

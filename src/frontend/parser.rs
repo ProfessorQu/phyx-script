@@ -195,6 +195,13 @@ impl Parser {
             let value = self.parse_statement();
 
             Statement::AssignmentExpr { assignee: Box::new(left), value: Box::new(value) }
+        } else if let Token::CompoundEquals(operator) = self.at() {
+            self.eat();
+
+            let right = self.parse_statement();
+            let expr = Statement::BinaryExpr { left: Box::new(left.clone()), right: Box::new(right), operator };
+
+            Statement::AssignmentExpr { assignee: Box::new(left), value: Box::new(expr) }
         } else {
             left
         }

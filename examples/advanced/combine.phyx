@@ -8,7 +8,7 @@ fn update(self) {
 
         self.frames = 0
     } else {
-        self.frames = self.frames + 1
+        self.frames += 1
     }
 
     self.color = hsv(self.frames % 360, 1.0, 1.0)
@@ -16,7 +16,7 @@ fn update(self) {
 }
 
 fn hit(self) {
-    self.size = self.size + 1
+    self.size += 1
 }
 
 objects.add(object {
