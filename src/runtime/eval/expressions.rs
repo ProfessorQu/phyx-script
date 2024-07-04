@@ -178,7 +178,7 @@ pub fn eval_call_expr(args: Vec<Statement>, caller: &Statement, env: &mut Enviro
     }
 }
 
-pub fn eval_object_update_expr(object: RuntimeValue, func: &mut Function) -> RuntimeValue {
+pub fn eval_runtime_object_expr(object: RuntimeValue, func: &mut Function) -> RuntimeValue {
     let mut scope = Environment::new(func.declaration_env.clone(), true);
 
     scope.declare_var(func.parameters[0].clone(), object.clone());

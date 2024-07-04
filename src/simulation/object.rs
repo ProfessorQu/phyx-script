@@ -6,7 +6,7 @@ use nannou::prelude::*;
 use rapier2d::prelude::*;
 use rand::Rng;
 
-use crate::{frontend::{ast::Statement, ShapeType}, runtime::{eval_object_update_expr, Environment, Function, RuntimeValue}};
+use crate::{frontend::{ast::Statement, ShapeType}, runtime::{eval_runtime_object_expr, Environment, Function, RuntimeValue}};
 
 use super::physics::Physics;
 
@@ -250,7 +250,7 @@ impl Object {
             None => return
         };
 
-        let new_map = match eval_object_update_expr(object, func) {
+        let new_map = match eval_runtime_object_expr(object, func) {
             RuntimeValue::Object(map) => map,
             _ => panic!("Invalid object")
         };
@@ -277,7 +277,7 @@ impl Object {
             None => return
         };
 
-        let new_map = match eval_object_update_expr(object, func) {
+        let new_map = match eval_runtime_object_expr(object, func) {
             RuntimeValue::Object(map) => map,
             _ => panic!("Invalid object")
         };

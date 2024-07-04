@@ -2,9 +2,10 @@ use std::{cmp::Ordering, env, fs};
 
 use crate::{frontend::Parser, runtime::{evaluate, Environment, RuntimeValue}, simulation::ObjectBuilder};
 
-use super::{physics::Physics, Object};
+use super::{physics::Physics, Audio, Object};
 
 use nannou::{prelude::*, winit::window::Icon};
+use nannou_audio::Buffer;
 
 static FPS: u128 = 60;
 static SECS_PER_FRAME: u128 = 1_000_000 / FPS;
@@ -13,6 +14,7 @@ pub struct Model {
     num_updates: u128,
     physics: Physics,
     objects: Vec<Object>,
+    audio_stream: nannou_audio::Stream<Audio>,
     background_color: Rgb<u8>
 }
 
@@ -25,6 +27,10 @@ pub fn model(app: &App) -> Model {
         Ordering::Equal => ()
     }
 
+    let filename = &args[1];
+    let title = "Phyx - ".to_string() + filename.split('/').last().expect("Filename is empty");
+    app.main_window().set_title(title.as_str());
+
     app.main_window().set_maximized(true);
 
     let decoder = png::Decoder::new(fs::File::open("assets/icon.png").unwrap());
@@ -34,10 +40,6 @@ pub fn model(app: &App) -> Model {
     let bytes = &buf[..info.buffer_size()].to_vec();
     let icon = Icon::from_rgba(bytes.clone(), 180, 180).expect("Failed to create icon");
     app.main_window().set_window_icon(Some(icon));
-
-    let filename = &args[1];
-    let title = "Phyx - ".to_string() + filename.split('/').last().expect("Filename is empty");
-    app.main_window().set_title(title.as_str());
 
     let code = fs::read_to_string(filename).expect("Failed to read file");
     let mut parser = Parser::new();
@@ -60,10 +62,22 @@ pub fn model(app: &App) -> Model {
         value => panic!("Invalid value for background: {:?}", value)
     };
 
+    let audio = Audio::new();
+
+    let audio_host = nannou_audio::Host::new();
+    let stream = audio_host
+        .new_output_stream(audio)
+        .render(play_audio)
+        .build()
+        .expect("Failed to build stream");
+
+    stream.play().expect("Failed to play");
+
     Model {
         num_updates: 0,
         physics,
         objects,
+        audio_stream: stream,
         background_color
     }
 }
@@ -76,6 +90,16 @@ fn add_objects(values: &Vec<RuntimeValue>, objects: &mut Vec<Object>, physics: &
             add_objects(values, objects, physics);
         } else {
             panic!("Not an object: {:?}", value);
+        }
+    }
+}
+
+fn play_audio(audio: &mut Audio, buffer: &mut Buffer) {
+    if let Some(note) = audio.get_note() {
+        for frame in buffer.frames_mut() {
+            for channel in frame {
+                *channel = note;
+            }
         }
     }
 }
@@ -95,6 +119,7 @@ pub fn update(app: &App, model: &mut Model, _update: Update) {
     for (collider1, collider2) in collisions {
         for object in &mut model.objects {
             if object.test_collider(&model.physics, collider1) || object.test_collider(&model.physics, collider2) {
+                model.audio_stream.send(|audio| audio.add_note(1.0)).unwrap();
                 object.hit(&mut model.physics);
             }
         }
