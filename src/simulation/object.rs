@@ -8,7 +8,7 @@ use rand::Rng;
 
 use crate::{frontend::{ast::Statement, ShapeType}, runtime::{eval_runtime_object_expr, Environment, Function, RuntimeValue}};
 
-use super::physics::Physics;
+use super::{physics::Physics, Audio};
 
 pub struct ObjectBuilder {
     pub shape: ShapeType,
@@ -26,6 +26,8 @@ pub struct ObjectBuilder {
     pub color: Rgb<u8>,
     pub stroke_color: Rgb<u8>,
     pub stroke_weight: f32,
+
+    pub hit_note_volume: f32,
 
     pub frames_per_trail_obj: Option<u128>,
 
@@ -53,6 +55,8 @@ impl ObjectBuilder {
             color: WHITE,
             stroke_color: WHITE,
             stroke_weight: 3.0,
+
+            hit_note_volume: 0.0,
 
             frames_per_trail_obj: None,
             
@@ -84,6 +88,8 @@ impl ObjectBuilder {
                 ("color", RuntimeValue::Color(color)) => builder.color(color),
                 ("stroke_color", RuntimeValue::Color(color)) => builder.stroke_color(color),
                 ("stroke_weight", RuntimeValue::Number(number)) => builder.stroke_weight(number),
+
+                ("hit_note_volume", RuntimeValue::Number(number)) => builder.hit_note_volume(number),
 
                 ("trail", RuntimeValue::Number(number)) => builder.frames_per_trail_obj(number),
 
@@ -164,6 +170,11 @@ impl ObjectBuilder {
         self
     }
 
+    pub fn hit_note_volume(mut self, hit_note_volume: f32) -> ObjectBuilder {
+        self.hit_note_volume = hit_note_volume;
+        self
+    }
+
     pub fn frames_per_trail_obj(mut self, frames_per_trail_obj: f32) -> ObjectBuilder {
         self.frames_per_trail_obj = Some(frames_per_trail_obj as u128);
         self
@@ -201,6 +212,8 @@ impl ObjectBuilder {
             stroke_color: self.stroke_color,
             stroke_weight: self.stroke_weight,
 
+            hit_note_volume: self.hit_note_volume,
+
             frames_per_trail_obj: self.frames_per_trail_obj,
             trail_objs: vec![],
 
@@ -229,6 +242,8 @@ pub struct Object {
     stroke_color: Rgb<u8>,
     stroke_weight: f32,
 
+    hit_note_volume: f32,
+
     frames_per_trail_obj: Option<u128>,
     trail_objs: Vec<(Translation<f32>, f32, Object)>,
 
@@ -242,6 +257,16 @@ pub struct Object {
 
 impl Object {
     pub fn update(&mut self, physics: &mut Physics, elapsed_frames: u128) {
+        if let Some(frames_req) = self.frames_per_trail_obj {
+            if elapsed_frames / frames_req > self.trail_objs.len() as u128 {
+                let (pos, rot) = self.get_pos_and_rot(physics);
+                let mut obj_clone = self.clone();
+                obj_clone.trail_objs = vec![];
+
+                self.trail_objs.push((pos, rot, obj_clone));
+            }
+        }
+
         let object_map = self.to_map(physics);
         let object = RuntimeValue::Object(object_map);
 
@@ -256,19 +281,12 @@ impl Object {
         };
 
         self.update_map(new_map, physics);
-
-        if let Some(frames_req) = self.frames_per_trail_obj {
-            if elapsed_frames / frames_req > self.trail_objs.len() as u128 {
-                let (pos, rot) = self.get_pos_and_rot(physics);
-                let mut obj_clone = self.clone();
-                obj_clone.trail_objs = vec![];
-
-                self.trail_objs.push((pos, rot, obj_clone));
-            }
-        }
     }
 
-    pub fn hit(&mut self, physics: &mut Physics) {
+    pub fn hit(&mut self, physics: &mut Physics, audio_stream: &mut nannou_audio::Stream<Audio>) {
+        let hit_note = self.hit_note_volume;
+        audio_stream.send(move |audio| audio.add_note(hit_note)).expect("Failed to send note to audio stream");
+
         let object_map = self.to_map(physics);
         let object = RuntimeValue::Object(object_map);
 
@@ -308,6 +326,8 @@ impl Object {
         map.insert("stroke_color".to_string(), RuntimeValue::Color(self.stroke_color));
         map.insert("stroke_weight".to_string(), RuntimeValue::Number(self.stroke_weight));
 
+        map.insert("hit_note_volume".to_string(), RuntimeValue::Number(self.hit_note_volume));
+
         for (key, value) in self.others.clone() {
             map.insert(key, value);
         }
@@ -341,6 +361,9 @@ impl Object {
                 ("color", RuntimeValue::Color(color)) => self.color = color,
                 ("stroke_color", RuntimeValue::Color(color)) => self.stroke_color = color,
                 ("stroke_weight", RuntimeValue::Number(number)) => self.stroke_weight = number,
+
+                ("hit_note_volume", RuntimeValue::Number(number)) => self.hit_note_volume = number,
+
                 (key, value) => {
                     if self.others.contains_key(key) {
                         self.others.insert(key.to_string(), value);

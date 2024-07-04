@@ -33,7 +33,10 @@ pub fn model(app: &App) -> Model {
 
     app.main_window().set_maximized(true);
 
-    let decoder = png::Decoder::new(fs::File::open("assets/icon.png").unwrap());
+    let mut icon_path = app.assets_path().expect("Failed to find assets directory");
+    icon_path.push("icon.png");
+
+    let decoder = png::Decoder::new(fs::File::open(icon_path).unwrap());
     let mut reader = decoder.read_info().expect("Failed to read info of icon");
     let mut buf = vec![0; reader.output_buffer_size()];
     let info = reader.next_frame(&mut buf).expect("Failed to read the next frame");
@@ -119,8 +122,7 @@ pub fn update(app: &App, model: &mut Model, _update: Update) {
     for (collider1, collider2) in collisions {
         for object in &mut model.objects {
             if object.test_collider(&model.physics, collider1) || object.test_collider(&model.physics, collider2) {
-                model.audio_stream.send(|audio| audio.add_note(1.0)).unwrap();
-                object.hit(&mut model.physics);
+                object.hit(&mut model.physics, &mut model.audio_stream);
             }
         }
     }
