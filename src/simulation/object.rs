@@ -1,5 +1,5 @@
 use core::panic;
-use std::collections::HashMap;
+use std::{collections::HashMap, path::Path};
 
 use nalgebra::SimdComplexField;
 use nannou::prelude::*;
@@ -27,6 +27,7 @@ pub struct ObjectBuilder {
     pub stroke_color: Rgb<u8>,
     pub stroke_weight: f32,
 
+    pub hit_note: String,
     pub hit_note_volume: f32,
 
     pub frames_per_trail_obj: Option<u128>,
@@ -56,6 +57,7 @@ impl ObjectBuilder {
             stroke_color: WHITE,
             stroke_weight: 3.0,
 
+            hit_note: "A0vH".to_string(),
             hit_note_volume: 0.0,
 
             frames_per_trail_obj: None,
@@ -89,6 +91,7 @@ impl ObjectBuilder {
                 ("stroke_color", RuntimeValue::Color(color)) => builder.stroke_color(color),
                 ("stroke_weight", RuntimeValue::Number(number)) => builder.stroke_weight(number),
 
+                ("hit_note", RuntimeValue::Note(note)) => builder.hit_note(note),
                 ("hit_note_volume", RuntimeValue::Number(number)) => builder.hit_note_volume(number),
 
                 ("trail", RuntimeValue::Number(number)) => builder.frames_per_trail_obj(number),
@@ -169,6 +172,11 @@ impl ObjectBuilder {
         self.stroke_weight = stroke_weight;
         self
     }
+    
+    pub fn hit_note(mut self, hit_note: String) -> ObjectBuilder {
+        self.hit_note = hit_note;
+        self
+    }
 
     pub fn hit_note_volume(mut self, hit_note_volume: f32) -> ObjectBuilder {
         self.hit_note_volume = hit_note_volume;
@@ -212,6 +220,7 @@ impl ObjectBuilder {
             stroke_color: self.stroke_color,
             stroke_weight: self.stroke_weight,
 
+            hit_note: self.hit_note,
             hit_note_volume: self.hit_note_volume,
 
             frames_per_trail_obj: self.frames_per_trail_obj,
@@ -242,6 +251,7 @@ pub struct Object {
     stroke_color: Rgb<u8>,
     stroke_weight: f32,
 
+    hit_note: String,
     hit_note_volume: f32,
 
     frames_per_trail_obj: Option<u128>,
@@ -283,9 +293,15 @@ impl Object {
         self.update_map(new_map, physics);
     }
 
-    pub fn hit(&mut self, physics: &mut Physics, audio_stream: &mut nannou_audio::Stream<Audio>) {
-        let hit_note = self.hit_note_volume;
-        audio_stream.send(move |audio| audio.add_note(hit_note)).expect("Failed to send note to audio stream");
+    pub fn hit(&mut self, assets_path: &Path, physics: &mut Physics, audio_stream: &mut nannou_audio::Stream<Audio>) {
+        let mut note_path = assets_path.join("notes");
+        note_path.push(self.hit_note.clone() + ".wav");
+
+        let note = audrey::open(note_path).expect("Failed to load sound");
+        let volume = self.hit_note_volume;
+
+        audio_stream.send(move |audio| audio.play_note(note, volume)).expect("Failed to send to audio stream");
+        // audio_stream.send(move |audio| audio.add_note(hit_note)).expect("Failed to send note to audio stream");
 
         let object_map = self.to_map(physics);
         let object = RuntimeValue::Object(object_map);
@@ -326,6 +342,7 @@ impl Object {
         map.insert("stroke_color".to_string(), RuntimeValue::Color(self.stroke_color));
         map.insert("stroke_weight".to_string(), RuntimeValue::Number(self.stroke_weight));
 
+        map.insert("hit_note".to_string(), RuntimeValue::Note(self.hit_note.clone()));
         map.insert("hit_note_volume".to_string(), RuntimeValue::Number(self.hit_note_volume));
 
         for (key, value) in self.others.clone() {
@@ -362,6 +379,7 @@ impl Object {
                 ("stroke_color", RuntimeValue::Color(color)) => self.stroke_color = color,
                 ("stroke_weight", RuntimeValue::Number(number)) => self.stroke_weight = number,
 
+                ("hit_note", RuntimeValue::Note(note)) => self.hit_note = note,
                 ("hit_note_volume", RuntimeValue::Number(number)) => self.hit_note_volume = number,
 
                 (key, value) => {

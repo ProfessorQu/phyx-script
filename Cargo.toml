@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+audrey = "0.3.0"
 crossbeam = "0.8.4"
 hsv = "0.1.1"
 nalgebra = "0.33.0"

@@ -1,6 +1,8 @@
 objects.add(object {
     gravity: 3,
-    bounciness: 1.6
+    bounciness: 1.6,
+    stroke_color: grey,
+    trail: 10
 })
 
 objects.add(object {

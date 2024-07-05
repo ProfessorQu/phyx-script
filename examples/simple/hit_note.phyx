@@ -1,6 +1,8 @@
 objects.add(object {
     gravity: 3,
-    bounciness: 1.6
+    bounciness: 1.6,
+    hit_note: C8vH,
+    hit_note_volume: 1
 })
 
 objects.add(object {

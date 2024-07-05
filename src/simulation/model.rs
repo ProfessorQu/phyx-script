@@ -43,9 +43,19 @@ pub fn model(app: &App) -> Model {
     let icon = Icon::from_rgba(bytes.clone(), 180, 180).expect("Failed to create icon");
     app.main_window().set_window_icon(Some(icon));
 
+    let mut notes_path = app.assets_path().expect("Failed to find assets directory");
+    notes_path.push("notes");
+
+    let notes = notes_path.read_dir().expect("Failed to read dir").map(
+        |file| file.expect("Invalid file").file_name()
+            .into_string().expect("Failed to convert to string")
+            .strip_suffix(".wav").expect("Failed to strip .wav suffix")
+            .to_string()
+    ).collect();
+
     let code = fs::read_to_string(filename).expect("Failed to read file");
     let mut parser = Parser::new();
-    let mut global_env = Environment::new_global();
+    let mut global_env = Environment::new_global(notes);
 
     let ast = parser.produce_ast(code);
     evaluate(ast, &mut global_env);
@@ -106,12 +116,14 @@ pub fn update(app: &App, model: &mut Model, _update: Update) {
         object.update(&mut model.physics, model.num_updates);
     }
 
+    let assets_path = app.assets_path().expect("Failed to get assets path");
+
     let collisions = model.physics.step();
 
     for (collider1, collider2) in collisions {
         for object in &mut model.objects {
             if object.test_collider(&model.physics, collider1) || object.test_collider(&model.physics, collider2) {
-                object.hit(&mut model.physics, &mut model.audio_stream);
+                object.hit(&assets_path, &mut model.physics, &mut model.audio_stream);
             }
         }
     }

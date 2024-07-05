@@ -39,23 +39,25 @@ pub enum RuntimeValue {
 
     Shape(ShapeType),
     Color(Rgb<u8>),
+    Note(String)
 }
 
 impl Display for RuntimeValue {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            RuntimeValue::Number(number) => write!(f, "{}", number),
-            RuntimeValue::Boolean(boolean) => write!(f, "{}", boolean),
+            Self::Number(number) => write!(f, "{}", number),
+            Self::Boolean(boolean) => write!(f, "{}", boolean),
 
-            RuntimeValue::NativeFn(func) => write!(f, "native fn ({:?})", func),
-            RuntimeValue::Function(Function { name, parameters, body: _, declaration_env: _ }) => write!(f, "{}({:?})", name, parameters),
-            RuntimeValue::Range(start, stop, step) => write!(f, "range({}, {}, {})", start, stop, step),
+            Self::NativeFn(func) => write!(f, "native fn ({:?})", func),
+            Self::Function(Function { name, parameters, body: _, declaration_env: _ }) => write!(f, "{}({:?})", name, parameters),
+            Self::Range(start, stop, step) => write!(f, "range({}, {}, {})", start, stop, step),
 
-            RuntimeValue::Object(map) => write!(f, "Object {{ {:?} }}", map),
-            RuntimeValue::Objects(objects) => write!(f, "Objects {{ {:?} }}", objects),
+            Self::Object(map) => write!(f, "Object {{ {:?} }}", map),
+            Self::Objects(objects) => write!(f, "Objects {{ {:?} }}", objects),
 
-            RuntimeValue::Shape(shape) => write!(f, "{:?}", shape),
-            RuntimeValue::Color(color) => write!(f, "{:?}", color),
+            Self::Shape(shape) => write!(f, "{:?}", shape),
+            Self::Color(color) => write!(f, "{:?}", color),
+            Self::Note(note) => write!(f, "{}", note)
         }
     }
 }

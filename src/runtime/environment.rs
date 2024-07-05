@@ -22,7 +22,7 @@ impl Environment {
         }
     }
 
-    pub fn new_global() -> Self {
+    pub fn new_global(notes: Vec<String>) -> Self {
         let mut env = Self {
             parent: None,
             variables: HashMap::new(),
@@ -33,6 +33,10 @@ impl Environment {
             env.declare_var(name.to_string(), RuntimeValue::Color(Rgb::new(
                 color.red, color.green, color.green
             )));
+        }
+
+        for note in notes {
+            env.declare_var(note.clone(), RuntimeValue::Note(note.clone()));
         }
 
         env.declare_var("objects".to_string(), RuntimeValue::Objects(vec![]));

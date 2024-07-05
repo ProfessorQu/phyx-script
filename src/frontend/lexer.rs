@@ -208,7 +208,7 @@ pub fn tokenize(source_code: String) -> Vec<Token> {
             _ if c.is_alphabetic() || c == '_' => {
                 let mut id_string = c.to_string();
                 while let Some(&next) = chars.peek() {
-                    if next.is_alphabetic() || next == '_' {
+                    if next.is_alphabetic() || next.is_numeric() || next == '_' || next == '#' {
                         chars.next();
                         id_string.push(next);
                     } else {
