@@ -201,3 +201,25 @@ pub fn sqrt(args: Vec<RuntimeValue>, _env: &mut Environment) -> RuntimeValue {
         arg => panic!("Invalid argument to 'abs': {}", arg)
     }
 }
+
+pub fn sin(args: Vec<RuntimeValue>, _env: &mut Environment) -> RuntimeValue {
+    if args.len() != 1 {
+        panic!("Invalid number of arguments to 'abs' function")
+    }
+
+    match &args[0] {
+        RuntimeValue::Number(number) => RuntimeValue::Number(number.sin()),
+        arg => panic!("Invalid argument to 'abs': {}", arg)
+    }
+}
+
+pub fn cos(args: Vec<RuntimeValue>, _env: &mut Environment) -> RuntimeValue {
+    if args.len() != 1 {
+        panic!("Invalid number of arguments to 'abs' function")
+    }
+
+    match &args[0] {
+        RuntimeValue::Number(number) => RuntimeValue::Number(number.cos()),
+        arg => panic!("Invalid argument to 'abs': {}", arg)
+    }
+}

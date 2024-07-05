@@ -1,0 +1,36 @@
+objects.add(object {
+    fixed: true,
+    color: yellow,
+    stroke_color: orange,
+    size: 70,
+})
+
+// MERCURY
+objects.add(object {
+    update: fn update1(self) {
+        self.frames += 0.01
+
+        self.x = sin(self.frames) * 100 
+        self.y = cos(self.frames) * 100
+    },
+    fixed: true,
+    color: red,
+    stroke_color: darkred,
+    size: 10,
+    frames: 0
+})
+
+// EARTH
+objects.add(object {
+    update: fn update2(self) {
+        self.frames += 0.001
+
+        self.x = sin(self.frames) * 200 
+        self.y = cos(self.frames) * 200
+    },
+    fixed: true,
+    color: blue,
+    stroke_color: darkblue,
+    size: 10,
+    frames: 0
+})

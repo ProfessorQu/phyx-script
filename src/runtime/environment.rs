@@ -31,7 +31,7 @@ impl Environment {
 
         for (name, color) in &super::colors::COLORS {
             env.declare_var(name.to_string(), RuntimeValue::Color(Rgb::new(
-                color.red, color.green, color.green
+                color.red, color.green, color.blue
             )));
         }
 
@@ -61,6 +61,9 @@ impl Environment {
         env.declare_var("abs".to_string(), RuntimeValue::NativeFn(native_fns::abs));
         env.declare_var("pow".to_string(), RuntimeValue::NativeFn(native_fns::pow));
         env.declare_var("sqrt".to_string(), RuntimeValue::NativeFn(native_fns::sqrt));
+
+        env.declare_var("sin".to_string(), RuntimeValue::NativeFn(native_fns::sin));
+        env.declare_var("cos".to_string(), RuntimeValue::NativeFn(native_fns::cos));
 
         env
     }
