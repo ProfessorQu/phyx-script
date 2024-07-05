@@ -17,6 +17,19 @@ pub struct Model {
     background_color: Rgb<u8>
 }
 
+fn set_icon(app: &App) {
+    let mut icon_path = app.assets_path().expect("Failed to find assets directory");
+    icon_path.push("icon.png");
+
+    let decoder = png::Decoder::new(fs::File::open(icon_path).unwrap());
+    let mut reader = decoder.read_info().expect("Failed to read info of icon");
+    let mut buf = vec![0; reader.output_buffer_size()];
+    let info = reader.next_frame(&mut buf).expect("Failed to read the next frame");
+    let bytes = &buf[..info.buffer_size()].to_vec();
+    let icon = Icon::from_rgba(bytes.clone(), 180, 180).expect("Failed to create icon");
+    app.main_window().set_window_icon(Some(icon));
+}
+
 pub fn model(app: &App) -> Model {
     let args: Vec<String> = env::args().collect();
 
@@ -32,17 +45,7 @@ pub fn model(app: &App) -> Model {
 
     app.main_window().set_maximized(true);
 
-    let mut icon_path = app.assets_path().expect("Failed to find assets directory");
-    icon_path.push("icon.png");
-
-    let decoder = png::Decoder::new(fs::File::open(icon_path).unwrap());
-    let mut reader = decoder.read_info().expect("Failed to read info of icon");
-    let mut buf = vec![0; reader.output_buffer_size()];
-    let info = reader.next_frame(&mut buf).expect("Failed to read the next frame");
-    let bytes = &buf[..info.buffer_size()].to_vec();
-    let icon = Icon::from_rgba(bytes.clone(), 180, 180).expect("Failed to create icon");
-    app.main_window().set_window_icon(Some(icon));
-
+    set_icon(app);
     let mut notes_path = app.assets_path().expect("Failed to find assets directory");
     notes_path.push("notes");
 

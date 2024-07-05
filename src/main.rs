@@ -6,8 +6,6 @@ mod frontend;
 mod runtime;
 mod simulation;
 
-fn main() -> Result<(), String> {
-    nannou::app(model).update(update).simple_window(view).run();
-
-    Ok(())
+fn main() {
+    nannou::app(model).update(update).simple_window(view).run()
 }

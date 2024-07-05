@@ -211,14 +211,17 @@ impl ObjectBuilder {
         }
 
         Object {
-            shape: self.shape,
+            drawing: ObjectDrawing {
+                shape: self.shape,
 
-            width: self.width,
-            height: self.height,
+                width: self.width,
+                height: self.height,
 
-            color: self.color,
-            stroke_color: self.stroke_color,
-            stroke_weight: self.stroke_weight,
+                color: self.color,
+
+                stroke_color: self.stroke_color,
+                stroke_weight: self.stroke_weight
+            },
 
             hit_note: self.hit_note,
             hit_note_volume: self.hit_note_volume,
@@ -239,189 +242,19 @@ impl ObjectBuilder {
 }
 
 #[derive(Debug, Clone)]
-pub struct Object {
+struct ObjectDrawing {
     shape: ShapeType,
 
     width: f32,
     height: f32,
 
-    bounciness: f32,
-
     color: Rgb<u8>,
     stroke_color: Rgb<u8>,
     stroke_weight: f32,
-
-    hit_note: String,
-    hit_note_volume: f32,
-
-    frames_per_trail_obj: Option<u128>,
-    trail_objs: Vec<(Translation<f32>, f32, Object)>,
-
-    update_fn: Option<Function>,
-    hit_fn: Option<Function>,
-
-    handle: RigidBodyHandle,
-
-    others: HashMap<String, RuntimeValue>
 }
 
-impl Object {
-    pub fn update(&mut self, physics: &mut Physics, elapsed_frames: u128) {
-        if let Some(frames_req) = self.frames_per_trail_obj {
-            if elapsed_frames / frames_req > self.trail_objs.len() as u128 {
-                let (pos, rot) = self.get_pos_and_rot(physics);
-                let mut obj_clone = self.clone();
-                obj_clone.trail_objs = vec![];
-
-                self.trail_objs.push((pos, rot, obj_clone));
-            }
-        }
-
-        let object_map = self.to_map(physics);
-        let object = RuntimeValue::Object(object_map);
-
-        let func = match &mut self.update_fn {
-            Some(func) => func,
-            None => return
-        };
-
-        let new_map = match eval_runtime_object_expr(object, func) {
-            RuntimeValue::Object(map) => map,
-            _ => panic!("Invalid object")
-        };
-
-        self.update_map(new_map, physics);
-    }
-
-    pub fn hit(&mut self, assets_path: &Path, physics: &mut Physics, audio_stream: &mut nannou_audio::Stream<Audio>) {
-        let mut note_path = assets_path.join("notes");
-        note_path.push(self.hit_note.clone() + ".wav");
-
-        let note = audrey::open(note_path).expect("Failed to load sound");
-        let volume = self.hit_note_volume;
-
-        audio_stream.send(move |audio| audio.play_note(note, volume)).expect("Failed to send to audio stream");
-        // audio_stream.send(move |audio| audio.add_note(hit_note)).expect("Failed to send note to audio stream");
-
-        let object_map = self.to_map(physics);
-        let object = RuntimeValue::Object(object_map);
-
-        let func = match &mut self.hit_fn {
-            Some(func) => func,
-            None => return
-        };
-
-        let new_map = match eval_runtime_object_expr(object, func) {
-            RuntimeValue::Object(map) => map,
-            _ => panic!("Invalid object")
-        };
-
-        self.update_map(new_map, physics);
-    }
-
-    pub fn to_map(&self, physics: &Physics) -> HashMap<String, RuntimeValue> {
-        let mut map = HashMap::new();
-
-        let rigidbody = physics.bodies.get(self.handle).expect("Invalid handle");
-        let pos = rigidbody.position().translation;
-        let gravity = rigidbody.gravity_scale();
-
-        map.insert("shape".to_string(), RuntimeValue::Shape(self.shape));
-
-        map.insert("x".to_string(), RuntimeValue::Number(pos.x));
-        map.insert("y".to_string(), RuntimeValue::Number(pos.y));
-
-        map.insert("width".to_string(), RuntimeValue::Number(self.width));
-        map.insert("height".to_string(), RuntimeValue::Number(self.height));
-        map.insert("size".to_string(), RuntimeValue::Number(self.width));
-
-        map.insert("gravity".to_string(), RuntimeValue::Number(gravity));
-        map.insert("bounciness".to_string(), RuntimeValue::Number(self.bounciness));
-
-        map.insert("color".to_string(), RuntimeValue::Color(self.color));
-        map.insert("stroke_color".to_string(), RuntimeValue::Color(self.stroke_color));
-        map.insert("stroke_weight".to_string(), RuntimeValue::Number(self.stroke_weight));
-
-        map.insert("hit_note".to_string(), RuntimeValue::Note(self.hit_note.clone()));
-        map.insert("hit_note_volume".to_string(), RuntimeValue::Number(self.hit_note_volume));
-
-        for (key, value) in self.others.clone() {
-            map.insert(key, value);
-        }
-
-        map
-    }
-
-    pub fn update_map(&mut self, new_map: HashMap<String, RuntimeValue>, physics: &mut Physics) {
-        let rigidbody = physics.bodies.get_mut(self.handle).expect("Failed to get rigidbody");
-        let mut pos = *rigidbody.position();
-
-        let wake_up = !rigidbody.is_sleeping();
-
-        for (key, value) in new_map {
-            match (key.as_str(), value) {
-                ("shape", RuntimeValue::Shape(shape)) => self.shape = shape,
-
-                ("x", RuntimeValue::Number(number)) => pos.translation.x = number,
-                ("y", RuntimeValue::Number(number)) => pos.translation.y = number,
-
-                ("width", RuntimeValue::Number(number)) => self.width = number,
-                ("height", RuntimeValue::Number(number)) => self.height = number,
-                ("size", RuntimeValue::Number(number)) => {
-                    self.width = number;
-                    self.height = number;
-                },
-
-                ("gravity", RuntimeValue::Number(number)) => rigidbody.set_gravity_scale(number, wake_up),
-                ("bounciness", RuntimeValue::Number(number)) => self.bounciness = number,
-
-                ("color", RuntimeValue::Color(color)) => self.color = color,
-                ("stroke_color", RuntimeValue::Color(color)) => self.stroke_color = color,
-                ("stroke_weight", RuntimeValue::Number(number)) => self.stroke_weight = number,
-
-                ("hit_note", RuntimeValue::Note(note)) => self.hit_note = note,
-                ("hit_note_volume", RuntimeValue::Number(number)) => self.hit_note_volume = number,
-
-                (key, value) => {
-                    if self.others.contains_key(key) {
-                        self.others.insert(key.to_string(), value);
-                    } else {
-                        panic!("Invalid key-value pair to update object: {}-{}", key, value);
-                    }
-                }
-            }
-        }
-
-        rigidbody.set_position(pos, wake_up);
-        self.update_shape(physics);
-    }
-
-    pub fn update_shape(&mut self, physics: &mut Physics) {
-        let rigidbody = physics.bodies.get(self.handle).expect("Failed to get rigidbody").clone();
-
-        physics.remove_colliders(rigidbody.colliders());
-        physics.add_collider(self.handle, self.shape, self.bounciness, self.width, self.height, self.stroke_weight);
-    }
-
-    pub fn test_collider(&self, physics: &Physics, collider: ColliderHandle) -> bool {
-        let rigidbody = match physics.bodies.get(self.handle) {
-            Some(rb) => rb,
-            None => panic!("Object doesn't have associated handle")
-        };
-
-        rigidbody.colliders().contains(&collider)
-    }
-
-    pub fn draw(&self, draw: &Draw, physics: &Physics) {
-        for (pos, rot, obj) in &self.trail_objs {
-            obj.draw_obj(draw, *pos, *rot);
-        }
-
-        let (pos, rot) = self.get_pos_and_rot(physics);
-        self.draw_obj(draw, pos, rot);
-    }
-
-    fn draw_obj(&self, draw: &Draw, pos: Translation<f32>, rot: f32) {
+impl ObjectDrawing {
+    fn draw(&self, draw: &Draw, pos: Translation<f32>, rot: f32) {
         match self.shape {
             ShapeType::Circle => {
                 draw.ellipse()
@@ -456,6 +289,200 @@ impl Object {
             }
         }
     }
+}
+
+#[derive(Debug, Clone)]
+struct TrailObject {
+    drawing: ObjectDrawing,
+    pos: Translation<f32>,
+    rot: f32
+}
+
+#[derive(Debug, Clone)]
+pub struct Object {
+    drawing: ObjectDrawing,
+
+    hit_note: String,
+    hit_note_volume: f32,
+
+    frames_per_trail_obj: Option<u128>,
+    trail_objs: Vec<TrailObject>,
+
+    bounciness: f32,
+
+    update_fn: Option<Function>,
+    hit_fn: Option<Function>,
+
+    handle: RigidBodyHandle,
+
+    others: HashMap<String, RuntimeValue>
+}
+
+impl Object {
+    pub fn update(&mut self, physics: &mut Physics, elapsed_frames: u128) {
+        if let Some(frames_req) = self.frames_per_trail_obj {
+            if elapsed_frames / frames_req > self.trail_objs.len() as u128 {
+                let (pos, rot) = self.get_pos_and_rot(physics);
+                let drawing = self.drawing.clone();
+
+                self.trail_objs.push(TrailObject {
+                    drawing,
+                    pos,
+                    rot
+                });
+            }
+        }
+
+        let object_map = self.to_map(physics);
+        let object = RuntimeValue::Object(object_map);
+
+        let func = match &mut self.update_fn {
+            Some(func) => func,
+            None => return
+        };
+
+        let new_map = match eval_runtime_object_expr(object, func) {
+            RuntimeValue::Object(map) => map,
+            _ => panic!("Invalid object")
+        };
+
+        self.update_map(new_map, physics);
+    }
+
+    pub fn hit(&mut self, assets_path: &Path, physics: &mut Physics, audio_stream: &mut nannou_audio::Stream<Audio>) {
+        let mut note_path = assets_path.join("notes");
+        note_path.push(self.hit_note.clone() + ".wav");
+
+        let note = audrey::open(note_path).expect("Failed to load sound");
+        let volume = self.hit_note_volume;
+
+        audio_stream.send(move |audio| audio.play_note(note, volume)).expect("Failed to send to audio stream");
+
+        let object_map = self.to_map(physics);
+        let object = RuntimeValue::Object(object_map);
+
+        let func = match &mut self.hit_fn {
+            Some(func) => func,
+            None => return
+        };
+
+        let new_map = match eval_runtime_object_expr(object, func) {
+            RuntimeValue::Object(map) => map,
+            _ => panic!("Invalid object")
+        };
+
+        self.update_map(new_map, physics);
+    }
+
+    pub fn to_map(&self, physics: &Physics) -> HashMap<String, RuntimeValue> {
+        let mut map = HashMap::new();
+
+        let rigidbody = physics.bodies.get(self.handle).expect("Invalid handle");
+        let pos = rigidbody.position().translation;
+        let gravity = rigidbody.gravity_scale();
+
+        map.insert("shape".to_string(), RuntimeValue::Shape(self.drawing.shape));
+
+        map.insert("x".to_string(), RuntimeValue::Number(pos.x));
+        map.insert("y".to_string(), RuntimeValue::Number(pos.y));
+
+        map.insert("width".to_string(), RuntimeValue::Number(self.drawing.width));
+        map.insert("height".to_string(), RuntimeValue::Number(self.drawing.height));
+        map.insert("size".to_string(), RuntimeValue::Number(self.drawing.width));
+
+        map.insert("gravity".to_string(), RuntimeValue::Number(gravity));
+        map.insert("bounciness".to_string(), RuntimeValue::Number(self.bounciness));
+
+        map.insert("color".to_string(), RuntimeValue::Color(self.drawing.color));
+        map.insert("stroke_color".to_string(), RuntimeValue::Color(self.drawing.stroke_color));
+        map.insert("stroke_weight".to_string(), RuntimeValue::Number(self.drawing.stroke_weight));
+
+        map.insert("hit_note".to_string(), RuntimeValue::Note(self.hit_note.clone()));
+        map.insert("hit_note_volume".to_string(), RuntimeValue::Number(self.hit_note_volume));
+
+        for (key, value) in self.others.clone() {
+            map.insert(key, value);
+        }
+
+        map
+    }
+
+    pub fn update_map(&mut self, new_map: HashMap<String, RuntimeValue>, physics: &mut Physics) {
+        let rigidbody = physics.bodies.get_mut(self.handle).expect("Failed to get rigidbody");
+        let mut pos = *rigidbody.position();
+
+        let wake_up = !rigidbody.is_sleeping();
+
+        for (key, value) in new_map {
+            match (key.as_str(), value) {
+                ("shape", RuntimeValue::Shape(shape)) => self.drawing.shape = shape,
+
+                ("x", RuntimeValue::Number(number)) => pos.translation.x = number,
+                ("y", RuntimeValue::Number(number)) => pos.translation.y = number,
+
+                ("width", RuntimeValue::Number(number)) => self.drawing.width = number,
+                ("height", RuntimeValue::Number(number)) => self.drawing.height = number,
+                ("size", RuntimeValue::Number(number)) => {
+                    self.drawing.width = number;
+                    self.drawing.height = number;
+                },
+
+                ("gravity", RuntimeValue::Number(number)) => rigidbody.set_gravity_scale(number, wake_up),
+                ("bounciness", RuntimeValue::Number(number)) => self.bounciness = number,
+
+                ("color", RuntimeValue::Color(color)) => self.drawing.color = color,
+                ("stroke_color", RuntimeValue::Color(color)) => self.drawing.stroke_color = color,
+                ("stroke_weight", RuntimeValue::Number(number)) => self.drawing.stroke_weight = number,
+
+                ("hit_note", RuntimeValue::Note(note)) => self.hit_note = note,
+                ("hit_note_volume", RuntimeValue::Number(number)) => self.hit_note_volume = number,
+
+                (key, value) => {
+                    if self.others.contains_key(key) {
+                        self.others.insert(key.to_string(), value);
+                    } else {
+                        panic!("Invalid key-value pair to update object: {}-{}", key, value);
+                    }
+                }
+            }
+        }
+
+        rigidbody.set_position(pos, wake_up);
+        self.update_shape(physics);
+    }
+
+    pub fn update_shape(&mut self, physics: &mut Physics) {
+        let rigidbody = physics.bodies.get(self.handle).expect("Failed to get rigidbody").clone();
+
+        physics.remove_colliders(rigidbody.colliders());
+        physics.add_collider(
+            self.handle,
+            self.drawing.shape,
+            self.bounciness,
+            self.drawing.width,
+            self.drawing.height,
+            self.drawing.stroke_weight
+        );
+    }
+
+    pub fn test_collider(&self, physics: &Physics, collider: ColliderHandle) -> bool {
+        let rigidbody = match physics.bodies.get(self.handle) {
+            Some(rb) => rb,
+            None => panic!("Object doesn't have associated handle")
+        };
+
+        rigidbody.colliders().contains(&collider)
+    }
+
+    pub fn draw(&self, draw: &Draw, physics: &Physics) {
+        for TrailObject { drawing, pos, rot } in &self.trail_objs {
+            drawing.draw(draw, *pos, *rot);
+        }
+
+        let (pos, rot) = self.get_pos_and_rot(physics);
+        self.drawing.draw(draw, pos, rot);
+    }
+
 
     fn get_pos_and_rot(&self, physics: &Physics) -> (Translation<f32>, f32) {
         let rigidbody = match physics.bodies.get(self.handle) {
