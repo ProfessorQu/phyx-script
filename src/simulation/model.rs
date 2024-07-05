@@ -2,10 +2,9 @@ use std::{cmp::Ordering, env, fs};
 
 use crate::{frontend::Parser, runtime::{evaluate, Environment, RuntimeValue}, simulation::ObjectBuilder};
 
-use super::{physics::Physics, Audio, Object};
+use super::{audio::play_audio, physics::Physics, Audio, Object};
 
 use nannou::{prelude::*, winit::window::Icon};
-use nannou_audio::Buffer;
 
 static FPS: u128 = 60;
 static SECS_PER_FRAME: u128 = 1_000_000 / FPS;
@@ -93,16 +92,6 @@ fn add_objects(values: &Vec<RuntimeValue>, objects: &mut Vec<Object>, physics: &
             add_objects(values, objects, physics);
         } else {
             panic!("Not an object: {:?}", value);
-        }
-    }
-}
-
-fn play_audio(audio: &mut Audio, buffer: &mut Buffer) {
-    if let Some(note) = audio.get_note() {
-        for frame in buffer.frames_mut() {
-            for channel in frame {
-                *channel = note;
-            }
         }
     }
 }
