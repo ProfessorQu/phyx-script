@@ -32,7 +32,7 @@ pub fn eval_for_loop(loop_var: String, range: &Statement, body: Vec<Statement>, 
     let mut result = RuntimeValue::Number(0.0);
 
     for i in (start..stop).step_by(step) {
-        let mut scope = Environment::new(env.clone(), false);
+        let mut scope = Environment::new(env.clone(), env.simulation_running);
         scope.declare_var(loop_var.clone(), RuntimeValue::Number(i as f32));
 
         for statement in body.clone() {
@@ -53,7 +53,7 @@ pub fn eval_if_statement(condition: &Statement, body: Vec<Statement>, else_body:
     };
 
     let mut result = RuntimeValue::Number(0.0);
-    let mut scope = Environment::new(env.clone(), false);
+    let mut scope = Environment::new(env.clone(), env.simulation_running);
     if boolean {
         for statement in body.clone() {
             result = evaluate(statement, &mut scope);
@@ -78,7 +78,7 @@ pub fn eval_while_statement(condition: &Statement, body: Vec<Statement>, env: &m
 
     let mut result = RuntimeValue::Number(0.0);
     while boolean {
-        let mut scope = Environment::new(env.clone(), false);
+        let mut scope = Environment::new(env.clone(), env.simulation_running);
 
         for statement in body.clone() {
             result = evaluate(statement, &mut scope);

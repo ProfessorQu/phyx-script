@@ -6,19 +6,20 @@ use crate::{frontend::ShapeType, runtime::values::RuntimeValue};
 
 use super::native_fns;
 
+/// Store variables during runtime
 #[derive(Debug, Clone)]
 pub struct Environment {
     pub parent: Option<Box<Self>>,
     variables: HashMap<String, RuntimeValue>,
-    func_env: bool
+    pub simulation_running: bool
 }
 
 impl Environment {
-    pub fn new(parent: Self, func_env: bool) -> Self {
+    pub fn new(parent: Self, simulation_running: bool) -> Self {
         Self {
             parent: Some(Box::new(parent)),
             variables: HashMap::new(),
-            func_env
+            simulation_running
         }
     }
 
@@ -26,7 +27,7 @@ impl Environment {
         let mut env = Self {
             parent: None,
             variables: HashMap::new(),
-            func_env: false
+            simulation_running: false
         };
 
         for (name, color) in &super::colors::COLORS {
@@ -103,8 +104,8 @@ impl Environment {
     pub fn resolve_mut(&mut self, varname: &String) -> &mut Environment {
         if self.variables.contains_key(varname) {
             self
-        } else if self.func_env {
-            panic!("Can't resolve mutable variable '{}' because this is a function environment", varname)
+        } else if self.simulation_running {
+            panic!("Can't resolve mutable variable '{}' because the simulation is currenlty running", varname)
         } else if let Some(parent) = &mut self.parent {
             parent.resolve_mut(varname)
         } else {
@@ -121,7 +122,7 @@ impl Environment {
             self.assign_var(varname, value);
         }
 
-        if other.func_env {
+        if other.simulation_running {
             return
         }
 
@@ -146,7 +147,7 @@ impl Environment {
             };
         }
 
-        if other.func_env {
+        if other.simulation_running {
             return
         }
 

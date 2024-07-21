@@ -1,5 +1,3 @@
-use std::iter::Peekable;
-
 use phf::phf_map;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -72,29 +70,7 @@ static KEYWORDS: phf::Map<&'static str, Token> = phf_map! {
     "object" => Token::Object
 };
 
-fn get_number_string(c: char, chars: &mut Peekable<std::str::Chars<'_>>) -> String {
-    let mut num_string = c.to_string();
-    let mut decimal_in_string = false;
-    while let Some(&next) = chars.peek() {
-        if next.is_numeric() {
-            chars.next();
-            num_string.push(next);
-        } else if next == '.' {
-            if decimal_in_string {
-                panic!("'.' already used in this number")
-            }
-
-            chars.next();
-            num_string.push(next);
-            decimal_in_string = true;
-        } else {
-            break
-        }
-    }
-
-    num_string
-}
-
+/// Convert a string of code into a vector of Tokens
 pub fn tokenize(source_code: String) -> Vec<Token> {
     let mut tokens = vec![];
     let mut chars = source_code.chars().peekable();
@@ -203,7 +179,26 @@ pub fn tokenize(source_code: String) -> Vec<Token> {
                 }
             }
             _ if c.is_numeric() => {
-                tokens.push(Token::Number(get_number_string(c, &mut chars)))
+                let mut num_string = c.to_string();
+                let mut decimal_in_string = false;
+                while let Some(&next) = chars.peek() {
+                    if next.is_numeric() {
+                        chars.next();
+                        num_string.push(next);
+                    } else if next == '.' {
+                        if decimal_in_string {
+                            panic!("'.' already used in this number")
+                        }
+
+                        chars.next();
+                        num_string.push(next);
+                        decimal_in_string = true;
+                    } else {
+                        break
+                    }
+                }
+
+                tokens.push(Token::Number(num_string))
             }
             _ if c.is_alphabetic() || c == '_' => {
                 let mut id_string = c.to_string();

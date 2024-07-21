@@ -483,7 +483,6 @@ impl Object {
         self.drawing.draw(draw, pos, rot);
     }
 
-
     fn get_pos_and_rot(&self, physics: &Physics) -> (Translation<f32>, f32) {
         let rigidbody = match physics.bodies.get(self.handle) {
             Some(rb) => rb,

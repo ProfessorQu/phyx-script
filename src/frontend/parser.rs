@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use super::{ast::Statement, lexer::{tokenize, Token}};
 
+/// Convert tokens into a program
 pub struct Parser {
     tokens: Vec<Token>
 }
@@ -35,6 +36,7 @@ impl Parser {
         }
     }
 
+    /// Convert a string of code into a program
     pub fn produce_ast(&mut self, source_code: String) -> Statement {
         self.tokens = tokenize(source_code);
         let mut body = vec![];
@@ -43,7 +45,7 @@ impl Parser {
             body.push(self.parse_statement());
         }
 
-        Statement::Program{ body }
+        Statement::Program { body }
     }
 
     fn parse_statement(&mut self) -> Statement {
